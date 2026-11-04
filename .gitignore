@@ -1,0 +1,4 @@
+node_modules/
+dist/
+model/output/
+.DS_Store
