@@ -29,6 +29,8 @@ On a personal account a collaborator has write access, with no Triage role, so a
 - **Feature:** `build`
 - **Review trigger:** `labelled`
 - **Upstream findings:** `sent with evidence`
+- **Waived doctor finding:** `label.github-default` on `yedeya/playground-3d` for `documentation`, `duplicate`, `good first issue`, `help wanted`, `invalid`, `question`, `wontfix` (kept at adoption: existing and future issues may carry them)
+- **Waived doctor finding:** `deploy.reference-undeclared` on `docs/qa/adoption.md` (playground-3d deploys nothing yet: no environments, no Lead projects)
 
 ## Data
 
