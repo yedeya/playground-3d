@@ -1,0 +1,15 @@
+{
+  "extraKnownMarketplaces": {
+    "kanon": {
+      "source": {
+        "source": "github",
+        "repo": "yedeya-labs/kanon",
+        "ref": "candidate-v0.44.0"
+      },
+      "autoUpdate": true
+    }
+  },
+  "enabledPlugins": {
+    "kanon@kanon": true
+  }
+}

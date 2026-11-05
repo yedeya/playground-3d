@@ -1,0 +1,37 @@
+# The project-setup hook (docs/lanes.md): every lane that checks out calls it before the agent.
+# It installs Node 24 and the npm dependencies, which the gates (`npm test`, `npm run build`) need.
+# No lane needs a database (no docs/qa/test-database.md), so `database` is ignored.
+name: Project setup
+description: Installs the project for an agent lane.
+inputs:
+  app-slug:
+    description: Passed by Kanon's lanes (docs/lanes.md).
+    default: ""
+  browsers:
+    description: Passed by Kanon's lanes (docs/lanes.md).
+    default: ""
+  database:
+    description: Passed by Kanon's lanes (docs/lanes.md).
+    default: ""
+  github-token:
+    description: Passed by Kanon's lanes (docs/lanes.md).
+    default: ""
+  install:
+    description: Passed by Kanon's lanes (docs/lanes.md).
+    default: ""
+  issue-number:
+    description: Passed by Kanon's lanes (docs/lanes.md).
+    default: ""
+  lane:
+    description: Passed by Kanon's lanes (docs/lanes.md).
+    default: ""
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v6
+      with:
+        node-version: 24
+        cache: npm
+    - if: inputs.install != 'false'
+      shell: bash
+      run: npm ci
