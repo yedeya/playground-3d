@@ -27,7 +27,7 @@ describe('what counts as a tap', () => {
     tracker.up(pointer(53, 64));
     expect(taps).toEqual([[53, 64]]);
 
-    // A second finger neither starts a tap nor ends the first one.
+    // A second finger's release neither taps nor ends the first press.
     tracker.down(pointer(50, 60));
     tracker.up(pointer(51, 61, false));
     expect(taps).toEqual([[53, 64]]);
@@ -35,9 +35,15 @@ describe('what counts as a tap', () => {
     tracker.up(pointer(52, 62));
     expect(taps).toEqual([[53, 64], [52, 62]]);
 
+    // A second finger's press starts no tap, and cancels the pending tap of the first.
     tracker.down(pointer(50, 60, false));
     tracker.up(pointer(50, 60));
     tracker.up(pointer(50, 60, false));
+    expect(taps).toHaveLength(2);
+    tracker.down(pointer(50, 60));
+    tracker.down(pointer(80, 90, false));
+    now = 300;
+    tracker.up(pointer(51, 61));
     expect(taps).toHaveLength(2);
 
     // A release without a press, a drag and a long press are no taps; each release ends its press.
@@ -46,7 +52,7 @@ describe('what counts as a tap', () => {
     tracker.up(pointer(70, 60));
     tracker.up(pointer(50, 60));
     tracker.down(pointer(50, 60));
-    now = 701;
+    now += 501;
     tracker.up(pointer(50, 60));
     expect(taps).toHaveLength(2);
   });
