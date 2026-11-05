@@ -29,10 +29,11 @@ describe('what counts as a tap', () => {
 
     // A second finger neither starts a tap nor ends the first one.
     tracker.down(pointer(50, 60));
-    tracker.up(pointer(50, 60, false));
+    tracker.up(pointer(51, 61, false));
+    expect(taps).toEqual([[53, 64]]);
     now = 200;
-    tracker.up(pointer(50, 60));
-    expect(taps).toEqual([[53, 64], [50, 60]]);
+    tracker.up(pointer(52, 62));
+    expect(taps).toEqual([[53, 64], [52, 62]]);
 
     tracker.down(pointer(50, 60, false));
     tracker.up(pointer(50, 60));
