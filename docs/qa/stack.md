@@ -6,3 +6,8 @@ The project's stack document (`K-LAYOUT-17`), started by `kanon init`. The secti
 
 1. `npm test`
 2. `npm run build`
+
+## Code areas
+
+- `src/` — code: the speeltoestel viewer app
+- `tests/` `vitest` — tests: unit tests of the model data and the part helpers
