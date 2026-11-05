@@ -16,7 +16,7 @@ What the backend does for the data its owner keeps for months: where that data i
 
 - `[SYNC-6]` `[seed]` Unless decision 1 records another method, the owner signs in with one passphrase. The server keeps only a salted scrypt hash of it, as a stage secret, and compares in constant time. A successful sign-in sets one session cookie, signed with the session-key secret and naming the owner's one fixed account id, that is `HttpOnly`, `Secure`, `SameSite=Lax`, scoped to `/` and valid for 400 days, and each successful sync renews it. A wrong passphrase answers 401 and sets no cookie. While the hash secret holds its placeholder value, every sign-in fails.
 - `[SYNC-7]` `[seed]` Every route under `/api/` other than sign-in and sign-out answers 401 to a request without a valid session, and such a request neither reads nor writes the database. Signing in neither reads nor writes any table either. A request that changes data is accepted only as `application/json` from the app's own origin. Changing the session-key secret ends every session.
-- `[SYNC-8]` `[seed]` Signing out ends the session on that device only, and deletes that device's local copy of the user data and its outbox. While the outbox holds changes not yet saved, signing out is refused, and the app says how many changes are unsaved. The texts are the ones decision 3 records.
+- `[SYNC-8]` `[seed]` Signing out ends the session on that device only, and deletes that device's local copy of the user data and its outbox. The control reads `Sign out`. While the outbox holds changes not yet saved, signing out is refused, and the app says how many changes are unsaved, as `Save first: 3 changes` for three. These are the texts decision 3 records.
 
 ## The sync protocol
 
@@ -30,9 +30,9 @@ What the backend does for the data its owner keeps for months: where that data i
 
 - `[SYNC-14]` `[seed]` The app reads user data only from the device's IndexedDB copy, so it reads the same offline as online. A change is applied to that copy at once and queued in an outbox that survives a reload and a restart of the app.
 - `[SYNC-15]` `[seed]` The app syncs, pushing its outbox and then pulling, when it starts, when the device comes back online, within 2 seconds of a change, and when the app becomes visible again. It never syncs on a timer alone. A change leaves the outbox only once the server has confirmed it. On 401, 409 or 503, on a refused batch, or with no network, the outbox keeps every change and the app tries again later: after sign-in on 401, after an update on 409, and with backoff otherwise.
-- `[SYNC-16]` `[seed]` The app always shows the sync state: everything saved; the number of changes not yet saved, and whether the device is offline; or that sign-in is needed to save. The Dutch texts are the ones decision 3 records.
+- `[SYNC-16]` `[seed]` The app always shows the sync state, in English: everything saved, as `Saved`; the number of changes not yet saved, as `3 unsaved` for three, and whether the device is offline, as `Offline · 3 unsaved`; or that sign-in is needed to save, as `Sign in to save`, which opens the sign-in form. These are the texts decision 3 records.
 - `[SYNC-17]` `[seed]` Once the owner has signed in, the app asks the browser to keep its storage persistent (`navigator.storage.persist()`).
 
 ## Delivery
 
-- `[SYNC-18]` `[seed]` On staging and on production, the owner has set the passphrase hash and the session key, installed the app on two real devices, signed in inside each installed app, and recorded a pass or fail for each step of the check on the project's human-action issue.
+- `[SYNC-18]` `[seed]` On production, the only stage (decision 5), the owner has set the passphrase hash and the session key, installed the app on two real devices, signed in inside each installed app, and recorded a pass or fail for each step of the check on the project's human-action issue.

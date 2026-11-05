@@ -16,5 +16,5 @@ What makes the viewer an app that installs on a phone and opens without a networ
 
 ## Updating
 
-- `[PWA-5]` `[seed]` A new version is downloaded in the background. The running app keeps the version it started with and shows that a new version is ready, with a button to switch to it. The switch happens on that tap or at the app's next start, and it leaves the device's IndexedDB copy and outbox untouched. The texts are the ones decision 3 records.
+- `[PWA-5]` `[seed]` A new version is downloaded in the background. The running app keeps the version it started with and shows that a new version is ready, as `New version`, with a button to switch to it, `Refresh`. The switch happens on that tap or at the app's next start, never by itself while the app is in use, and it leaves the device's IndexedDB copy and outbox untouched. These are the texts decision 3 records.
 - `[PWA-6]` `[seed]` The service worker script and the manifest are served with `Cache-Control: no-cache`, so a deploy reaches a device the next time the app is opened online.
