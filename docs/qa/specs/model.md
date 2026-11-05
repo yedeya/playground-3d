@@ -24,7 +24,7 @@ The app's own behaviour on the model (what the panel, the filters and the viewer
 
 - `[MODEL-9]` `[seed]` The app reads its model only from the GLB, fetched at runtime: no JSON model is tracked under `src/` or bundled into the client. Every part record the panel, the filters and the viewer use (its id, module, kit, group, size, source, natural colour and Dutch name) and the module colours come from the GLB's `extras`, and the card's kind is the part's `name` from the GLB.
 - `[MODEL-10]` `[seed]` The viewer draws each part with the GLB's own geometry, unindexed as stored, so it derives per-triangle normals and its edges at a 25° threshold as it did from the JSON; the model's bounds, and so the grid's position and the home view, equal the ones the JSON gave, to float32 precision.
-- `[MODEL-11]` `[seed]` Until the GLB has loaded, the stats line reads `Model laden…` and the panel shows no chips. If the GLB cannot be fetched or read, the `#fail` element shows `Het model kan niet laden. Laad de pagina opnieuw of probeer een andere browser.` in place of its WebGL message, and the panel stays empty. Once the GLB has loaded, a viewer that cannot start still leaves the panel working, as `[APP-15]` states.
+- `[MODEL-11]` `[seed]` Until the GLB has loaded, the stats line reads `Loading model…` and the panel shows no chips. If the GLB cannot be fetched or read, the `#fail` element shows `The model can't load. Reload the page or try another browser.` in place of its WebGL message, and the panel stays empty. Once the GLB has loaded, a viewer that cannot start still leaves the panel working, as `[APP-15]` states.
 
 ## Removal of the Python generator
 
