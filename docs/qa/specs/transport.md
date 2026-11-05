@@ -10,7 +10,7 @@ A piece's parts are named by the part `id` of the model data. Those ids are this
 
 - `[TRANS-1]` `[seed]` A transport plan holds zero or more pieces, each with an id, a display colour and a name that is non-empty and unique within the plan, compared case-insensitively after trimming spaces. Each part id belongs to at most one piece, so assigning a part to a piece removes it from any piece it was in. A part of the model that is in no piece is `Los`.
 - `[TRANS-2]` `[seed]` A stored part id that the loaded model does not contain is kept in the plan, never dropped, and is counted and listed by id as `Onbekend onderdeel` in the plan overview, so a regenerated model that renames a part shows up rather than silently losing that part's piece.
-- `[TRANS-3]` `[seed]` A piece that any joint label names cannot be deleted: the app says how many labels name it, and allows the delete once those labels are deleted or moved to another pair of pieces. A piece that no label names is deleted with its memberships, and its parts become `Los`.
+- `[TRANS-3]` `[seed]` Unless decision 9 records another rule, a piece that any joint label names cannot be deleted: the app says how many labels name it, and allows the delete once those labels are deleted or moved to another pair of pieces. A piece that no label names is deleted with its memberships, and its parts become `Los`.
 
 ## Contacts between pieces
 
@@ -25,7 +25,7 @@ A piece's parts are named by the part `id` of the model data. Those ids are this
 ## The 3D view and the filter
 
 - `[TRANS-8]` `[seed]` The filter row holds, after the module chips and `Geschat`, one chip per piece in plan order, showing the piece's colour, name and part count, and then `Los` with the number of parts in no piece. A piece's chip filters the 3D view, the part list and tap picking to that piece's parts, and `Los` to the parts in no piece. Every rule a module filter follows for the selection, the part list, the card, appearance and picking applies to a piece filter and to `Los` in the same way.
-- `[TRANS-9]` `[seed]` The colour button cycles through three modes, module colours, wood colours and transport colours, in that order, and reads the name of the next mode: `Houtkleur` in module colours, `Transportkleur` in wood colours and `Modulekleur` in transport colours. In transport colours each part takes its piece's colour, and a part in no piece is drawn in a neutral grey that is not in any piece's colour choice. The selected part keeps the selection colour in every mode.
+- `[TRANS-9]` `[seed]` The colour button cycles through three modes, module colours, wood colours and transport colours, in that order, and reads the name of the next mode: `Houtkleur` in module colours, `Transportkleur` in wood colours and `Modulekleur` in transport colours. In transport colours each part takes its piece's colour, and a part in no piece is drawn in a neutral grey that a piece cannot be given. The selected part keeps the selection colour in every mode.
 - `[TRANS-10]` `[seed]` Joint labels are drawn in the 3D view as markers at their stored point, in their tape colour and with their text, visible through other parts, in every colour mode. With no filter all labels are drawn; with a piece filter only the labels that name that piece; with any other filter none. Tapping a marker opens its label.
 
 ## Overview per piece
