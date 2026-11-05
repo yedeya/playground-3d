@@ -31,7 +31,7 @@ A piece's parts are named by the part `id` of the model data. Those ids are this
 ## Overview per piece
 
 - `[TRANS-11]` `[seed]` A piece's overview shows its name and colour, its part count, the size of its parts' joint bounding box as `L × W × H mm` (L the longer and W the shorter horizontal extent, H the height, each rounded to the nearest 10 mm), its parts counted per module, and, for each neighbour piece, the labels on that pair with their tape colour and text, or `No label yet` for a neighbour pair that has none.
-- `[TRANS-12]` `[seed]` The plan overview, shown when no piece is chosen, lists every piece with its part count and size, then `Loose` with its part count, the number of neighbour pairs that have no label, and every unknown part and displaced label.
+- `[TRANS-12]` `[seed]` The plan overview, shown when no piece is chosen, lists every piece with its part count and size, then `Loose` with its part count, the number of neighbour pairs that have no label, every unknown part and displaced label, and every membership and label that names a deleted piece (`[TRANS-21]`).
 
 ## Editing the plan
 
@@ -44,6 +44,7 @@ A piece's parts are named by the part `id` of the model data. Those ids are this
 - `[TRANS-16]` `[seed]` The transport plan, meaning its pieces, memberships and labels, is stored in the backend of project #8 against the owner's account. A change saved on one device reads back identical on another device after a reload, and the app holds no transport data only in the browser beyond project #8's offline queue.
 - `[TRANS-17]` `[seed]` A change made offline is kept, shown as not yet saved, and saved through project #8's sync once the device is online again. A membership is one record per part id, so two devices that assign the same part leave it in exactly one piece after sync.
 - `[TRANS-18]` `[seed]` The plan's schema change is additive: new tables only, each row scoped to the owning account under the data-isolation rule of `docs/qa/stack.md`, and no existing table or column changed.
+- `[TRANS-21]` `[seed]` A membership or a joint label that names a piece the plan no longer holds is kept, never dropped. This happens when one device deletes a piece while another device, offline, assigns a part to that piece or places or edits a label that names it, and the later change wins under project #8's sync (decision 12). The server accepts such a record, because each collection's validator checks only that record's own fields and never looks up another record, so the record never causes a sync batch to be refused. A part whose membership names a deleted piece counts as `Loose`, and assigning it to a piece replaces that membership. The plan overview lists each such part and label under `Deleted piece`, and the owner can then assign the part again, or edit or delete the label. `[TRANS-5]`'s rule that a label's two pieces are pieces of the plan applies to a label placed or edited on the device in use, not to a label received through sync.
 
 ## The model as built
 
