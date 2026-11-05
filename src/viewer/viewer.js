@@ -1,12 +1,9 @@
 // Three.js scene: one mesh per part, orbit controls, tap picking. Renders on demand to spare the phone battery.
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { matchesFilter } from '../domain/parts.js';
-
-const SELECT = 0xff1f6b;
-const TAP_MAX_MOVE_PX = 8;
-const TAP_MAX_MS = 500;
-const TAP_RADII_PX = [8, 16, 24];   // thin planks are hard to hit, so also try rays around the fingertip
+import { applyAppearance, createXray } from './appearance.js';
+import { partMesh } from './meshes.js';
+import { createTapTracker, pickPart } from './picking.js';
 
 export function createViewer({ canvas, data, store, onPick }) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
@@ -24,18 +21,8 @@ export function createViewer({ canvas, data, store, onPick }) {
 
   const bounds = new THREE.Box3();
   const meshes = data.parts.map(part => {
-    const geometry = new THREE.BufferGeometry();
-    geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(part.tri.map(v => v / 1000)), 3));
-    geometry.computeVertexNormals();
-    geometry.computeBoundingBox();
-    bounds.union(geometry.boundingBox);
-    const mesh = new THREE.Mesh(geometry, new THREE.MeshLambertMaterial({ side: THREE.DoubleSide }));
-    const edges = new THREE.LineSegments(
-      new THREE.EdgesGeometry(geometry, 25),
-      new THREE.LineBasicMaterial({ color: 0x1c2a2f, transparent: true, opacity: 0.45 }),
-    );
-    mesh.add(edges);
-    mesh.userData = { part, edges };
+    const mesh = partMesh(part);
+    bounds.union(mesh.geometry.boundingBox);
     scene.add(mesh);
     return mesh;
   });
@@ -46,12 +33,7 @@ export function createViewer({ canvas, data, store, onPick }) {
   grid.position.set(Math.round(center.x), 0, Math.round(center.z));
   scene.add(grid);
 
-  // Translucent copy without depth test, so a selected part stays visible behind other parts.
-  const xray = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshBasicMaterial({
-    color: SELECT, transparent: true, opacity: 0.4, depthTest: false, side: THREE.DoubleSide,
-  }));
-  xray.renderOrder = 10;
-  xray.visible = false;
+  const xray = createXray();
   scene.add(xray);
 
   const controls = new OrbitControls(camera, canvas);
@@ -84,58 +66,16 @@ export function createViewer({ canvas, data, store, onPick }) {
   }
 
   const raycaster = new THREE.Raycaster();
-  function pick(x, y) {
-    const rect = canvas.getBoundingClientRect();
-    const { filter } = store.get();
-    const targets = meshes.filter(m => matchesFilter(m.userData.part, filter));
-    const offsets = [[0, 0]];
-    for (const r of TAP_RADII_PX) {
-      for (let i = 0; i < 8; i++) offsets.push([r * Math.cos(i * Math.PI / 4), r * Math.sin(i * Math.PI / 4)]);
-    }
-    for (const [dx, dy] of offsets) {
-      const ndc = new THREE.Vector2((x + dx - rect.left) / rect.width * 2 - 1, -((y + dy - rect.top) / rect.height) * 2 + 1);
-      raycaster.setFromCamera(ndc, camera);
-      const hits = raycaster.intersectObjects(targets, false);
-      if (hits.length) return hits[0].object.userData.part;
-    }
-    return null;
-  }
+  const pick = (x, y) => pickPart({
+    x, y, rect: canvas.getBoundingClientRect(), camera, meshes, filter: store.get().filter, raycaster,
+  });
 
-  let press = null;
-  canvas.addEventListener('pointerdown', e => {
-    press = e.isPrimary ? { x: e.clientX, y: e.clientY, t: performance.now() } : null;
-  });
-  window.addEventListener('pointerup', e => {
-    if (!press || !e.isPrimary) return;
-    const moved = Math.hypot(e.clientX - press.x, e.clientY - press.y);
-    const elapsed = performance.now() - press.t;
-    press = null;
-    if (moved <= TAP_MAX_MOVE_PX && elapsed <= TAP_MAX_MS) onPick(pick(e.clientX, e.clientY));
-  });
+  const tracker = createTapTracker((x, y) => onPick(pick(x, y)));
+  canvas.addEventListener('pointerdown', tracker.down);
+  window.addEventListener('pointerup', tracker.up);
 
   function apply(state) {
-    xray.visible = false;
-    for (const mesh of meshes) {
-      const { part, edges } = mesh.userData;
-      const visible = matchesFilter(part, state.filter);
-      const selected = part.id === state.selected;
-      const material = mesh.material;
-      if (selected) {
-        material.color.setHex(SELECT);
-        xray.geometry = mesh.geometry;
-        xray.visible = true;
-      } else {
-        const [r, g, b] = state.natural ? part.natural : data.moduleColors[part.module];
-        material.color.setRGB(r, g, b, THREE.SRGBColorSpace);
-      }
-      material.emissive.setHex(selected ? SELECT : 0x000000);
-      material.emissiveIntensity = selected ? 0.75 : 0;
-      material.transparent = !visible;
-      material.opacity = visible ? 1 : 0.09;
-      material.depthWrite = visible;
-      edges.visible = visible;
-      material.needsUpdate = true;
-    }
+    applyAppearance(meshes, xray, state, data.moduleColors);
     draw();
   }
 
