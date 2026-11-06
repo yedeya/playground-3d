@@ -1,6 +1,8 @@
 /// <reference types="node" />
 // The smoke hook's check ([PLAT-10]): fetch the deployed page and fail unless it answers 200 with the title
-// `Speeltoestel ArcticFlyer 3D`, and every script it references (`<script src>`) answers 200 too. It reads the URL the deploy hook
+// `Speeltoestel ArcticFlyer 3D`, and every script it references (`<script src>`) answers 200 too. It also fetches the model the app
+// loads, `/models/speeltoestel.glb`, and fails unless it answers 200 with a body that starts with the glTF magic bytes `glTF`
+// ([MODEL-13]): the page and its scripts would pass while every visitor saw the load-failure text. It reads the URL the deploy hook
 // handed it in `$RUNNER_TEMP/playground-3d-url`, within the same job. It holds no credential, and the deploy lane's smoke step is the
 // only thing that runs it against production (`K-OBS-7`): its tests run it against a local server.
 //
@@ -10,16 +12,20 @@ import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 export const TITLE = 'Speeltoestel ArcticFlyer 3D';
+/** The GLB the app fetches, at the site's root (src/data/load-model.ts, `MODEL_URL`), and the magic bytes every GLB starts with. */
+export const MODEL = '/models/speeltoestel.glb';
+const MAGIC = 'glTF';
 /** The file the deploy hook writes the deployed URL to (.github/actions/deploy/url.ts). */
 const URL_FILE = 'playground-3d-url';
 const TIMEOUT = 30_000;
 
 type Options = { attempts?: number; wait?: number; log?: (line: string) => void };
 
-async function get(url: string): Promise<{ status: number; text: string } | { error: string }> {
+async function get(url: string): Promise<{ status: number; text: string; bytes: Uint8Array } | { error: string }> {
   try {
     const response = await fetch(url, { redirect: 'follow', signal: AbortSignal.timeout(TIMEOUT) });
-    return { status: response.status, text: await response.text() };
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    return { status: response.status, text: new TextDecoder().decode(bytes), bytes };
   } catch (error) {
     return { error: (error as Error).message };
   }
@@ -52,6 +58,15 @@ export async function smoke(url: string, { attempts = 3, wait = 10_000, log = ()
     if ('error' in answer) failures.push(`${script} could not be fetched: ${answer.error}`);
     else if (answer.status !== 200) failures.push(`${script} answered ${answer.status}, not 200`);
   }
+  // [MODEL-13]: the app fetches its model from the site's root, whatever path the page is at.
+  const model = new URL(MODEL, url).href;
+  const answer = await get(model);
+  if ('error' in answer) failures.push(`${model} could not be fetched: ${answer.error}`);
+  else if (answer.status !== 200) failures.push(`${model} answered ${answer.status}, not 200`);
+  else if (String.fromCharCode(...answer.bytes.subarray(0, MAGIC.length)) !== MAGIC) {
+    const start = String.fromCharCode(...answer.bytes.subarray(0, 8));
+    failures.push(`${model} answered 200, but its body starts with ${JSON.stringify(start)}, not the glTF magic bytes ${JSON.stringify(MAGIC)}`);
+  } else log(`${model} answered 200 with a GLB of ${answer.bytes.length} bytes.`);
   return failures;
 }
 
@@ -64,7 +79,7 @@ export async function main(env: Record<string, string | undefined>, options: Opt
   const url = readFileSync(file, 'utf8').trim();
   const failures = await smoke(url, options);
   if (failures.length) throw new Error(`The smoke check of ${url} failed:\n${failures.map(failure => `- ${failure}`).join('\n')}`);
-  options.log?.(`${url} passed: the page and every script it references answer 200, and its title is ${TITLE}.`);
+  options.log?.(`${url} passed: the page, every script it references and the model ${MODEL} answer 200, its title is ${TITLE}, and the model is a GLB.`);
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
