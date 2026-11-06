@@ -36,7 +36,6 @@ De ontwikkelserver van Next.js luistert op alle netwerkadressen, op poort 3000. 
 | `model/generator.ts` | Bron van het model: alle geometrie, in millimeters, met controle tegen de stuklijst |
 | `model/glb.ts` | Schrijft het model als GLB: een knoop per onderdeel, met de gegevens en de Nederlandse naam in `extras` |
 | `model/cli.ts` | Wat `npm run model` draait: bouwt het model en schrijft de GLB, en op verzoek de baseline |
-| `model/build_playground.py` | De oude Python-generator; `npm run model` gebruikt hem niet meer |
 | `public/models/speeltoestel.glb` | Gegenereerd model als GLB, dat de app bij het openen ophaalt; niet met de hand aanpassen |
 | `src/data/load-model.ts` | Haalt de GLB op en leest hem met de `GLTFLoader` van three.js: per onderdeel de gegevens uit `extras` en de geometrie |
 | `src/domain/model.ts` | De types van de modeldata: een onderdeel zoals de generator het bouwt (`Part`) en zoals de app het uit de GLB leest (`ModelPart`), het model, de modulecodes en het filter |
