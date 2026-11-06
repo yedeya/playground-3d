@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import data from '../src/data/speeltoestel.json';
 import { createActions } from '../src/actions';
 import { createStore, type AppState } from '../src/store';
+import { committedModel } from './model-glb';
+
+const data = await committedModel();
 
 const part = (id: string) => data.parts.find(p => p.id === id)!;
 const estimated = data.parts.find(p => p.source === 'estimate')!;

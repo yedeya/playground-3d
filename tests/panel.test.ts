@@ -1,11 +1,13 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it } from 'vitest';
-import data from '../src/data/speeltoestel.json';
 import { createActions } from '../src/actions';
 import { MODULES, MODULE_ORDER, toCssColor } from '../src/domain/parts';
 import { createStore, type AppState, type Store } from '../src/store';
 import { createPanel, type PanelData } from '../src/ui/panel';
+import { committedModel } from './model-glb';
 import { loadPage } from './page';
+
+const data = await committedModel();
 
 const $ = (selector: string) => document.querySelector<HTMLElement>(selector)!;
 const chips = (selector: string) => [...document.querySelectorAll<HTMLButtonElement>(`${selector} > button`)];
@@ -115,8 +117,8 @@ describe('card', () => {
 
   it('[APP-11] shows the source badge and leaves out the size when a part has none', () => {
     const synthetic: PanelData['parts'] = [
-      { id: 'X_manual', module: 'A45', group: 'post', kit: 'E24-F swing hook', size: '1950x88x44', source: 'manual' },
-      { id: 'X_estimate', module: 'H10', group: 'canvas', kit: 'handle', size: 'handle', source: 'estimate' },
+      { id: 'X_manual', module: 'A45', kit: 'E24-F swing hook', size: '1950x88x44', source: 'manual', name: 'Paal' },
+      { id: 'X_estimate', module: 'H10', kit: 'handle', size: 'handle', source: 'estimate', name: 'Schild' },
     ];
     open({ ...data, parts: synthetic }, { selected: 'X_manual' });
     expect(text($('#card h2'))).toBe('X_manual Paal');

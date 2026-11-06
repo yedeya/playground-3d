@@ -1,10 +1,11 @@
 // Three.js scene: one mesh per part, orbit controls, tap picking. Renders on demand to spare the phone battery.
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import type { Model, Part } from '../domain/model';
+import type { ModelPart } from '../domain/model';
+import type { LoadedModel } from '../data/load-model';
 import type { AppState, Store } from '../store';
 import { applyAppearance, createXray } from './appearance';
-import { partMesh } from './meshes';
+import { partMeshes } from './meshes';
 import { createTapTracker, pickPart } from './picking';
 
 export interface Viewer {
@@ -16,9 +17,9 @@ export interface Viewer {
 
 export function createViewer({ canvas, data, store, onPick }: {
   canvas: HTMLCanvasElement;
-  data: Model;
+  data: LoadedModel;
   store: Store;
-  onPick: (part: Part | null) => void;
+  onPick: (part: ModelPart | null) => void;
 }): Viewer {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
   renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
@@ -34,12 +35,11 @@ export function createViewer({ canvas, data, store, onPick }: {
   scene.add(fill);
 
   const bounds = new THREE.Box3();
-  const meshes = data.parts.map(part => {
-    const mesh = partMesh(part);
+  const meshes = partMeshes(data);
+  for (const mesh of meshes) {
     bounds.union(mesh.geometry.boundingBox!);   // partMesh computes it
     scene.add(mesh);
-    return mesh;
-  });
+  }
 
   const center = bounds.getCenter(new THREE.Vector3());
   const size = bounds.getSize(new THREE.Vector3());

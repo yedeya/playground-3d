@@ -1,10 +1,12 @@
 import * as THREE from 'three';
 import { describe, expect, it } from 'vitest';
-import data from '../src/data/speeltoestel.json';
 import { SELECT, appearanceOf, applyAppearance, createXray } from '../src/viewer/appearance';
-import { partMesh } from '../src/viewer/meshes';
+import { partMeshes } from '../src/viewer/meshes';
 import type { Rgb } from '../src/domain/model';
 import type { AppState } from '../src/store';
+import { committedModel } from './model-glb';
+
+const data = await committedModel();
 
 const part = (id: string) => data.parts.find(p => p.id === id)!;
 const srgb = ([r, g, b]: Rgb) => new THREE.Color().setRGB(r, g, b, THREE.SRGBColorSpace);
@@ -48,7 +50,7 @@ describe('appearance of a part', () => {
 });
 
 describe('appearance applied to the scene', () => {
-  const meshes = data.parts.map(partMesh);
+  const meshes = partMeshes(data);
   const xray = createXray();
   const byId = (id: string) => meshes.find(m => m.userData.part.id === id)!;
 
