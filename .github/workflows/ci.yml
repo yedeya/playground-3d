@@ -35,3 +35,32 @@ jobs:
       - run: npm test
       - run: npm run typecheck
       - run: npm run build
+
+  # Kanon's brief guard (K-PROJ-3, K-PROJ-5, K-LAYOUT-12, K-LAYOUT-13, K-WORK-23), run the way
+  # K-ADOPT-11 tells an adopter to: `kanon-path` at the pinned release, then Kanon's own script
+  # from the runner's action cache, so a pull request can't change the guard that judges it. It
+  # reads every brief under docs/projects/ (and docs/qa/exemptions.md when there is one) and each
+  # brief's tracking issue's labels and milestone, so it needs `issues: read`; a read that fails
+  # is a finding, not a pass. It runs on every event, not only on a change to a brief, because a
+  # tracking issue can change without one. No install: the guard needs only Kanon's Node.
+  briefs:
+    name: Brief guard
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          sparse-checkout: |
+            docs/projects
+            docs/qa
+          persist-credentials: false
+      - uses: yedeya-labs/kanon/actions/kanon-path@candidate-v0.44.0
+        id: kanon
+      - name: brief-guard (Kanon's, at the pinned release)
+        env:
+          KANON: ${{ steps.kanon.outputs.path }}
+          GH_TOKEN: ${{ github.token }}
+        run: node "$KANON/scripts/brief-guard.mjs"
