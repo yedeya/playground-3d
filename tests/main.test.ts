@@ -1,12 +1,13 @@
 // @vitest-environment jsdom
 // The whole page as main.js wires it. jsdom has no WebGL, so the 3D viewer cannot start here.
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi, type MockInstance } from 'vitest';
 import { loadPage } from './page.js';
 
-const $ = selector => document.querySelector(selector);
-const chip = (row, key) => [...document.querySelectorAll(`#${row} > button`)].find(b => b.dataset.key === key);
+const $ = (selector: string) => document.querySelector<HTMLElement>(selector)!;
+const chip = (row: string, key: string) =>
+  [...document.querySelectorAll<HTMLButtonElement>(`#${row} > button`)].find(b => b.dataset.key === key)!;
 
-let consoleError;
+let consoleError: MockInstance<typeof console.error>;
 beforeEach(async () => {
   loadPage();
   consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});

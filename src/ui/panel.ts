@@ -1,7 +1,20 @@
 // Bottom panel: card with the selected part, module chips, and the part list of the current filter.
+import type { ModuleCode, Part, Rgb } from '../domain/model.js';
 import { MODULES, MODULE_ORDER, kindOf, kitText, matchesFilter, sizeText, toCssColor } from '../domain/parts.js';
+import type { Actions } from '../actions.js';
+import type { AppState, Store } from '../store.js';
+import { byId } from './dom.js';
 
-function chip(html, key, onClick, className = 'chip') {
+/** The fields of a part the panel shows. */
+export type PanelPart = Pick<Part, 'id' | 'module' | 'group' | 'kit' | 'size' | 'source'>;
+
+/** The model data the panel reads. */
+export interface PanelData {
+  parts: readonly PanelPart[];
+  moduleColors: Readonly<Record<ModuleCode, Rgb>>;
+}
+
+function chip(html: string, key: string, onClick: () => void, className = 'chip'): HTMLButtonElement {
   const button = document.createElement('button');
   button.type = 'button';
   button.className = className;
@@ -11,7 +24,7 @@ function chip(html, key, onClick, className = 'chip') {
   return button;
 }
 
-function cardHtml(state, parts, estimatedCount) {
+function cardHtml(state: AppState, parts: readonly PanelPart[], estimatedCount: number): string {
   const part = parts.find(p => p.id === state.selected);
   if (part) {
     const size = sizeText(part.size);
@@ -34,14 +47,14 @@ function cardHtml(state, parts, estimatedCount) {
   return '<h2>Tik op een onderdeel</h2><p>Je ziet dan de code, module, maat en bron. Kies een module om alleen die delen te tonen. Schroeven, stuurwiel, telescoop en rompdoeken staan niet in dit model.</p>';
 }
 
-export function createPanel({ data, store, actions }) {
+export function createPanel({ data, store, actions }: { data: PanelData; store: Store; actions: Actions }): void {
   const { parts, moduleColors } = data;
-  const modulesEl = document.getElementById('modules');
-  const partsEl = document.getElementById('parts');
-  const cardEl = document.getElementById('card');
+  const modulesEl = byId('modules', HTMLElement);
+  const partsEl = byId('parts', HTMLElement);
+  const cardEl = byId('card', HTMLElement);
   const estimatedCount = parts.filter(p => p.source === 'estimate').length;
 
-  document.getElementById('stats').textContent =
+  byId('stats', HTMLElement).textContent =
     `${parts.length} onderdelen · ${MODULE_ORDER.length} modules · ${estimatedCount} geschat`;
 
   modulesEl.append(chip('<b>Alles</b>', 'all', () => actions.setFilter(null)));
@@ -52,13 +65,13 @@ export function createPanel({ data, store, actions }) {
   }
   modulesEl.append(chip(`<b>Geschat</b> <i>${estimatedCount}</i>`, 'estimate', () => actions.setFilter('estimate')));
 
-  const colourButton = document.getElementById('colour');
+  const colourButton = byId('colour', HTMLButtonElement);
   colourButton.addEventListener('click', () => store.set({ natural: !store.get().natural }));
 
-  function render(state) {
+  function render(state: AppState) {
     document.body.classList.toggle('natural', state.natural);
     colourButton.textContent = state.natural ? 'Modulekleur' : 'Houtkleur';
-    for (const button of modulesEl.children) {
+    for (const button of modulesEl.querySelectorAll<HTMLButtonElement>(':scope > button')) {
       button.setAttribute('aria-pressed', String((state.filter || 'all') === button.dataset.key));
     }
     partsEl.innerHTML = '';
@@ -68,7 +81,7 @@ export function createPanel({ data, store, actions }) {
         button.setAttribute('aria-pressed', String(state.selected === part.id));
         partsEl.append(button);
       }
-      const active = partsEl.querySelector('[aria-pressed="true"]');
+      const active = partsEl.querySelector<HTMLElement>('[aria-pressed="true"]');
       if (active) partsEl.scrollLeft = active.offsetLeft - partsEl.offsetLeft - 40;
     }
     cardEl.innerHTML = cardHtml(state, parts, estimatedCount);

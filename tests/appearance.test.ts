@@ -3,10 +3,12 @@ import { describe, expect, it } from 'vitest';
 import data from '../src/data/speeltoestel.json';
 import { SELECT, appearanceOf, applyAppearance, createXray } from '../src/viewer/appearance.js';
 import { partMesh } from '../src/viewer/meshes.js';
+import type { Rgb } from '../src/domain/model.js';
+import type { AppState } from '../src/store.js';
 
-const part = id => data.parts.find(p => p.id === id);
-const srgb = ([r, g, b]) => new THREE.Color().setRGB(r, g, b, THREE.SRGBColorSpace);
-const state = patch => ({ filter: null, selected: null, natural: false, ...patch });
+const part = (id: string) => data.parts.find(p => p.id === id)!;
+const srgb = ([r, g, b]: Rgb) => new THREE.Color().setRGB(r, g, b, THREE.SRGBColorSpace);
+const state = (patch: Partial<AppState>): AppState => ({ filter: null, selected: null, natural: false, ...patch });
 
 describe('appearance of a part', () => {
   const ladder = part('C14_S1');
@@ -48,7 +50,7 @@ describe('appearance of a part', () => {
 describe('appearance applied to the scene', () => {
   const meshes = data.parts.map(partMesh);
   const xray = createXray();
-  const byId = id => meshes.find(m => m.userData.part.id === id);
+  const byId = (id: string) => meshes.find(m => m.userData.part.id === id)!;
 
   it('[APP-13] paints every mesh from the state, and draws a translucent copy of the selected part over the rest', () => {
     applyAppearance(meshes, xray, state({ filter: 'C14', selected: 'C14_S1' }), data.moduleColors);

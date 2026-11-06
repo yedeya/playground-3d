@@ -5,7 +5,8 @@ The project's stack document (`K-LAYOUT-17`), started by `kanon init`. The secti
 ## Gates
 
 1. `npm test`
-2. `npm run build`
+2. `npm run typecheck`
+3. `npm run build`
 
 ## Code areas
 

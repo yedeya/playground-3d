@@ -2,6 +2,7 @@ import './styles.css';
 import data from './data/speeltoestel.json';
 import { createActions } from './actions.js';
 import { createStore } from './store.js';
+import { byId } from './ui/dom.js';
 import { createPanel } from './ui/panel.js';
 import { createViewer } from './viewer/viewer.js';
 
@@ -13,13 +14,13 @@ createPanel({ data, store, actions });
 
 try {
   const viewer = createViewer({
-    canvas: document.getElementById('view'),
+    canvas: byId('view', HTMLCanvasElement),
     data,
     store,
     onPick: actions.pick,
   });
-  document.getElementById('reset').addEventListener('click', viewer.home);
+  byId('reset', HTMLButtonElement).addEventListener('click', viewer.home);
 } catch (error) {
   console.error(error);
-  document.getElementById('fail').hidden = false;
+  byId('fail', HTMLElement).hidden = false;
 }

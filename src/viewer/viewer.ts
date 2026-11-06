@@ -1,11 +1,23 @@
 // Three.js scene: one mesh per part, orbit controls, tap picking. Renders on demand to spare the phone battery.
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import type { Model, Part } from '../domain/model.js';
+import type { AppState, Store } from '../store.js';
 import { applyAppearance, createXray } from './appearance.js';
 import { partMesh } from './meshes.js';
 import { createTapTracker, pickPart } from './picking.js';
 
-export function createViewer({ canvas, data, store, onPick }) {
+export interface Viewer {
+  /** Puts the camera back where the viewer opened. */
+  home(): void;
+}
+
+export function createViewer({ canvas, data, store, onPick }: {
+  canvas: HTMLCanvasElement;
+  data: Model;
+  store: Store;
+  onPick: (part: Part | null) => void;
+}): Viewer {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
   renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
   const scene = new THREE.Scene();
@@ -22,7 +34,7 @@ export function createViewer({ canvas, data, store, onPick }) {
   const bounds = new THREE.Box3();
   const meshes = data.parts.map(part => {
     const mesh = partMesh(part);
-    bounds.union(mesh.geometry.boundingBox);
+    bounds.union(mesh.geometry.boundingBox!);   // partMesh computes it
     scene.add(mesh);
     return mesh;
   });
@@ -56,17 +68,20 @@ export function createViewer({ canvas, data, store, onPick }) {
     draw();
   }
 
-  function fit() {
-    const rect = canvas.parentElement.getBoundingClientRect();
+  const frame = canvas.parentElement;
+  if (!frame) throw new Error('The 3D canvas is not in the page');
+
+  const fit = () => {
+    const rect = frame.getBoundingClientRect();
     if (!rect.width || !rect.height) return;
     renderer.setSize(rect.width, rect.height, false);
     camera.aspect = rect.width / rect.height;
     camera.updateProjectionMatrix();
     draw();
-  }
+  };
 
   const raycaster = new THREE.Raycaster();
-  const pick = (x, y) => pickPart({
+  const pick = (x: number, y: number) => pickPart({
     x, y, rect: canvas.getBoundingClientRect(), camera, meshes, filter: store.get().filter, raycaster,
   });
 
@@ -74,13 +89,13 @@ export function createViewer({ canvas, data, store, onPick }) {
   canvas.addEventListener('pointerdown', tracker.down);
   window.addEventListener('pointerup', tracker.up);
 
-  function apply(state) {
+  function apply(state: AppState) {
     applyAppearance(meshes, xray, state, data.moduleColors);
     draw();
   }
 
-  new ResizeObserver(fit).observe(canvas.parentElement);
-  const rect = canvas.parentElement.getBoundingClientRect();
+  new ResizeObserver(fit).observe(frame);
+  const rect = frame.getBoundingClientRect();
   camera.aspect = rect.width / Math.max(rect.height, 1);
   camera.updateProjectionMatrix();
   fit();

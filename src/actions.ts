@@ -1,8 +1,19 @@
 // What the panel and the viewer may ask of the store.
+import type { Filter, Part } from './domain/model.js';
 import { matchesFilter } from './domain/parts.js';
+import type { Store } from './store.js';
 
-export function createActions({ data, store }) {
-  const actions = {
+/** The fields of a part the actions read. */
+export type ActionPart = Pick<Part, 'id' | 'module' | 'source'>;
+
+export interface Actions {
+  select(id: string | null): void;
+  setFilter(filter: Filter): void;
+  pick(part: Pick<Part, 'id'> | null): void;
+}
+
+export function createActions({ data, store }: { data: { parts: readonly ActionPart[] }; store: Store }): Actions {
+  const actions: Actions = {
     select: id => store.set({ selected: id }),
     setFilter(filter) {
       const { selected } = store.get();

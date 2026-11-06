@@ -48,7 +48,7 @@ A piece's parts are named by the part `id` of the model data. Those ids are this
 
 ## The model as built
 
-- `[TRANS-19]` `[seed]` The model shows the ladder and the slide swapped against the manual, because that is how the real playset stands (decision 2), so labels are placed on the geometry seen while dismantling. The existing swap test (today in `tests/parts.test.js`) checks this geometry, and citing this id in its title locks the clause.
+- `[TRANS-19]` `[seed]` The model shows the ladder and the slide swapped against the manual, because that is how the real playset stands (decision 2), so labels are placed on the geometry seen while dismantling. The existing swap test (today in `tests/parts.test.ts`) checks this geometry, and citing this id in its title locks the clause.
 
 ## Delivery
 
