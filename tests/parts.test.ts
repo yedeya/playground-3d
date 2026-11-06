@@ -20,7 +20,7 @@ describe('model data', () => {
     expect(data.parts.filter(p => p.source === 'estimate')).toHaveLength(22);
   });
 
-  it('[APP-3] has the ladder and slide swapped compared with the manual', () => {
+  it('[APP-3] [TRANS-19] has the ladder and slide swapped compared with the manual', () => {
     const xs = (id: string) => {
       const { tri } = data.parts.find(p => p.id === id)!;
       return tri.filter((_, i) => i % 3 === 0);
