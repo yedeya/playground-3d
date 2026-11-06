@@ -33,11 +33,13 @@ A change that fails either never merges.
 
 ## Generated files
 
-- `src/server/db/migrations/`: `drizzle-kit`'s. Each migration is a `<NNNN>_<name>.sql` file with its snapshot in `meta/<NNNN>_snapshot.json`, and `meta/_journal.json` lists them in order. `npm run db:generate` writes all three; none is written by hand. After a merge conflict in the folder, which comes from two branches each generating the next migration: take the default branch's `src/server/db/migrations/` whole, delete your branch's own migration from it (its SQL file and its snapshot), resolve `src/server/db/schema.ts` so it holds both sides' changes, and run `npm run db:generate -- --name <name>` again, so your migration is regenerated after the default branch's. Then run `npm test`.
+- `src/server/db/migrations/`: `drizzle-kit`'s. Each migration is a `<NNNN>_<name>.sql` file with its snapshot in `meta/<NNNN>_snapshot.json`, and `meta/_journal.json` lists them in order. `npm run db:generate` writes all three; none is written by hand. They are generated code in the `src/` area, and the only JSON tracked under `src/` (`[MODEL-9]`'s guard in `tests/model-load.test.tsx` allows these two names and no other). After a merge conflict in the folder, which comes from two branches each generating the next migration: take the default branch's `src/server/db/migrations/` whole, delete your branch's own migration from it (its SQL file and its snapshot), resolve `src/server/db/schema.ts` so it holds both sides' changes, and run `npm run db:generate -- --name <name>` again, so your migration is regenerated after the default branch's. Then run `npm test`.
 - `package-lock.json`: take the default branch's, then run `npm install`, so the lock is derived rather than merged.
 
 ## Code areas
 
-- `src/` — code: the speeltoestel viewer app
+- `src/` — code: the speeltoestel viewer app, and under `src/server/` the backend: the Drizzle schema (`src/server/db/schema.ts`), its generated migrations (`src/server/db/migrations/`, see `## Generated files`) and sign-in (`src/server/auth/`, empty until project #8's Issue E)
 - `model/` — code: the model generator: the TypeScript one `npm run model` runs (`model/generator.ts`, its GLB writer `model/glb.ts` and its command line `model/cli.ts`)
 - `tests/` `vitest` — tests: unit tests of the model data, the part helpers and the model generator
+
+An area is a directory, so the configuration files at the repository's root, `drizzle.config.ts` (`drizzle-kit`'s, naming the schema and the migrations folder) among them, are in none.
