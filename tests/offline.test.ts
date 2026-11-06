@@ -5,7 +5,7 @@
 // stand-in service worker scope (tests/fake-service-worker.ts), and serves the build with `next start` to read the
 // headers. The installed app opening in airplane mode on a real phone is Issue H's check, not this file's.
 import { spawn, execFileSync, type ChildProcess } from 'node:child_process';
-import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { createServer } from 'node:net';
 import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -28,6 +28,14 @@ beforeAll(() => {
   rmSync(app, { recursive: true, force: true });
   mkdirSync(app);
   for (const source of SOURCES) cpSync(join(root, source), join(app, source), { recursive: true });
+  // One worker for the build's pages: the one that collects page data, and so first loads the service worker's route,
+  // then also prerenders it. That is the order in which a route that read the build's id too early would get none.
+  const config = join(app, 'next.config.ts');
+  const source = read(config);
+  const oneWorker = source.replace(/^export default (.+);$/m,
+    'const exported = $1;\nexported.experimental = { ...exported.experimental, cpus: 1 };\nexport default exported;');
+  if (oneWorker === source) throw new Error('next.config.ts has no `export default ...;` line to pin to one worker');
+  writeFileSync(config, oneWorker);
   execFileSync(process.execPath, [next, 'build'], {
     cwd: app,
     env: { ...process.env, NODE_ENV: 'production', NEXT_TELEMETRY_DISABLED: '1' },
@@ -273,6 +281,15 @@ describe('updating', () => {
     expect(worker.skipWaitingCalls).toBe(0);
     await worker.fire('message', { data: { type: 'SKIP_WAITING' } });
     expect(worker.skipWaitingCalls).toBe(1);
+  });
+
+  it('[PWA-6] stores the page afresh after every build: its revision in the precache list is the build\'s own id', () => {
+    const buildId = read(built('BUILD_ID')).trim();
+    const page = [...workerScript().matchAll(/\{revision:"([^"]*)",url:"\/"\}|\{url:"\/",revision:"([^"]*)"\}/g)]
+      .map(m => m[1] ?? m[2]);
+    expect(page).toEqual([buildId]);
+    // And that id is a fresh one, from next.config.ts, not a constant such as `dev` that every build would share.
+    expect(buildId).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
   });
 
   it('[PWA-5] leaves IndexedDB untouched while it installs, takes over and answers requests', async () => {

@@ -1,5 +1,14 @@
+import { randomUUID } from 'node:crypto';
 import { withSerwist } from '@serwist/turbopack';
 import type { NextConfig } from 'next';
+
+/**
+ * One id per `next build`: Next.js writes it to `.next/BUILD_ID`, and the compiler writes it into the service worker's
+ * route as `process.env.PWA_BUILD_ID`, the revision of the page in the precache list ([PWA-2], [PWA-6]). The route
+ * cannot read `.next/BUILD_ID` instead: Next.js loads the route, and Serwist builds the worker, while it collects page
+ * data, before it writes that file.
+ */
+export const BUILD_ID = randomUUID();
 
 // `npm run dev` listens on every interface so a phone on the same wifi can open the app, as Vite's `--host` did.
 // Next.js's dev server refuses its own dev resources to any host it does not know, so the app would never start
@@ -21,6 +30,8 @@ export const NO_CACHE_PATHS = ['/serwist/:path*', '/manifest.webmanifest'];
 
 const config: NextConfig = {
   allowedDevOrigins: PRIVATE_NETWORK,
+  generateBuildId: () => BUILD_ID,
+  env: { PWA_BUILD_ID: BUILD_ID },
   async headers() {
     // Lower case, as the prerendered routes store their own `cache-control`: OpenNext, which serves the deployed site,
     // lays these headers over the stored ones by their exact name.
