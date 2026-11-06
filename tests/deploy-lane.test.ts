@@ -15,7 +15,8 @@ import { collect, SST_READS } from '../.github/actions/build/collect.ts';
 import { place } from '../.github/actions/deploy/place.ts';
 import { main as probeMain, probe } from '../.github/actions/deploy/probe.ts';
 import { handOff, URL_FILE } from '../.github/actions/deploy/url.ts';
-import { main as smokeMain, smoke, TITLE } from '../.github/actions/smoke/smoke.ts';
+import { MODEL, main as smokeMain, smoke, TITLE } from '../.github/actions/smoke/smoke.ts';
+import { MODEL_URL } from '../src/data/load-model';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
 const read = (path: string) => readFileSync(join(root, path), 'utf8');
@@ -57,7 +58,7 @@ const tree = (dir: string): string[] =>
 const BUILDS = /\bopen-next(@[\w.]+)?\s+build\b|\bnext\s+build\b|\bnpm\s+run\s+build\b|\bsst\s+build\b/;
 
 // A server on 127.0.0.1 that answers each request with what `routes` returns, and records what it was asked.
-type Route = (req: IncomingMessage, body: string) => { status: number; body: string; type?: string };
+type Route = (req: IncomingMessage, body: string) => { status: number; body: string | Uint8Array; type?: string };
 async function serve(routes: (path: string) => Route | undefined) {
   const requests: { method: string; url: string; headers: IncomingMessage['headers']; body: string }[] = [];
   const server: Server = createServer((req: IncomingMessage, res: ServerResponse) => {
@@ -400,11 +401,15 @@ describe('the smoke hook', () => {
   const page = (title: string, scripts: string[]) => `<!DOCTYPE html><html lang="nl"><head><meta charSet="utf-8"/><title>${title}</title>${scripts
     .map(src => `<script src="${src}" async=""></script>`)
     .join('')}</head><body><div id="stage"></div></body></html>`;
-  const ok = (body: string, type?: string) => () => ({ status: 200, body, type });
+  const ok = (body: string | Uint8Array, type?: string) => () => ({ status: 200, body, type });
+  // The GLB the app ships, as the site serves it.
+  const glb = readFileSync(join(root, 'public/models/speeltoestel.glb'));
 
   beforeAll(async () => {
     site = await serve(path => {
       switch (path) {
+        case '/models/speeltoestel.glb':
+          return ok(glb, 'model/gltf-binary');
         case '/':
           return ok(page(TITLE, ['/_next/static/chunks/main.js', '_next/static/chunks/page.js']));
         case '/wrong-title/':
@@ -471,6 +476,69 @@ describe('the smoke hook', () => {
     });
     expect(result.status).not.toBe(0);
     expect(result.stderr).toMatch(/gone\.js/);
+  });
+});
+
+describe('the smoke hook\'s model check', () => {
+  // Tests of [MODEL-13] use their own sites, so each GLB route answers only what its test names.
+  const sites: { close: () => Promise<void> }[] = [];
+  afterEach(async () => {
+    await Promise.all(sites.splice(0).map(site => site.close()));
+  });
+  const page = `<!DOCTYPE html><html><head><title>${TITLE}</title><script src="/main.js"></script></head><body></body></html>`;
+  const siteWith = async (model: Route | undefined) => {
+    const site = await serve(path => {
+      if (path === '/') return () => ({ status: 200, body: page });
+      if (path === '/main.js') return () => ({ status: 200, body: 'void 0', type: 'application/javascript' });
+      if (path === '/models/speeltoestel.glb') return model;
+      return undefined;
+    });
+    sites.push(site);
+    return site;
+  };
+  const glb = readFileSync(join(root, 'public/models/speeltoestel.glb'));
+
+  it('[MODEL-13] fetches /models/speeltoestel.glb, the path the app fetches, from the deployed URL, and passes on 200 with glTF magic bytes', async () => {
+    expect(MODEL).toBe('/models/speeltoestel.glb');
+    expect(MODEL).toBe(MODEL_URL);
+    const site = await siteWith(() => ({ status: 200, body: glb, type: 'model/gltf-binary' }));
+    expect(await smoke(`${site.url}/`, { attempts: 1 })).toEqual([]);
+    expect(site.requests.map(request => request.url)).toContain('/models/speeltoestel.glb');
+  });
+
+  it('[MODEL-13] fetches the GLB from the deployed URL\'s origin, as the app\'s absolute path does', async () => {
+    const site = await serve(path => {
+      if (path === '/app/') return () => ({ status: 200, body: page });
+      if (path === '/main.js') return () => ({ status: 200, body: 'void 0', type: 'application/javascript' });
+      if (path === '/models/speeltoestel.glb') return () => ({ status: 200, body: glb, type: 'model/gltf-binary' });
+      return undefined;
+    });
+    sites.push(site);
+    expect(await smoke(`${site.url}/app/`, { attempts: 1 })).toEqual([]);
+  });
+
+  it('[MODEL-13] fails when the GLB does not answer 200', async () => {
+    const missing = await smoke(`${(await siteWith(undefined)).url}/`, { attempts: 1 });
+    expect(missing).toHaveLength(1);
+    expect(missing[0]).toMatch(/speeltoestel\.glb.*404/);
+    const failing = await smoke(`${(await siteWith(() => ({ status: 500, body: glb }))).url}/`, { attempts: 1 });
+    expect(failing).toHaveLength(1);
+    expect(failing[0]).toMatch(/speeltoestel\.glb.*500/);
+  });
+
+  it('[MODEL-13] fails when the GLB answers 200 with a body that does not start with the magic bytes glTF', async () => {
+    // A single-page fallback answering the app's HTML, a JSON glTF, a body cut short, and an empty one.
+    for (const body of [page, '{"asset":{"version":"2.0"}}', 'glT', '', Buffer.concat([Buffer.from('xglTF'), glb])]) {
+      const failures = await smoke(`${(await siteWith(() => ({ status: 200, body }))).url}/`, { attempts: 1 });
+      expect(failures, JSON.stringify(String(body).slice(0, 20))).toHaveLength(1);
+      expect(failures[0]).toMatch(/speeltoestel\.glb.*glTF/);
+    }
+  });
+
+  it('[MODEL-13] fails the hook\'s step when the GLB is missing', async () => {
+    const runnerTemp = temp();
+    writeFileSync(join(runnerTemp, URL_FILE), `${(await siteWith(undefined)).url}/`);
+    await expect(smokeMain({ RUNNER_TEMP: runnerTemp }, { attempts: 1 })).rejects.toThrow(/speeltoestel\.glb/);
   });
 });
 
