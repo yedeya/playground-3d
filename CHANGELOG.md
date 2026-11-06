@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.3.0](https://github.com/yedeya/playground-3d/compare/v0.2.0...v0.3.0) (2026-11-06)
+
+
+### Features
+
+* **db:** declare the Drizzle schema, its migrations and the data rules ([#68](https://github.com/yedeya/playground-3d/issues/68)) ([461fcf9](https://github.com/yedeya/playground-3d/commit/461fcf9cab13041f5fedd19e16c045be6c3d133a))
+* **pwa:** make the viewer an installable app that opens offline ([#69](https://github.com/yedeya/playground-3d/issues/69)) ([8d3be19](https://github.com/yedeya/playground-3d/commit/8d3be19c9f8f5c28bd05af6026a721d0d33d61a4))
+
+
+### Bug Fixes
+
+* raise @opennextjs/aws to 3.9.16 to clear the critical fast-xml-parser advisory ([#67](https://github.com/yedeya/playground-3d/issues/67)) ([54b6b02](https://github.com/yedeya/playground-3d/commit/54b6b02b44dca2c76a7effee522d22ed0555d43b))
+
 ## [0.2.0](https://github.com/yedeya/playground-3d/compare/v0.1.0...v0.2.0) (2026-11-06)
 
 
