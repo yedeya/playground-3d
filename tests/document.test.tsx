@@ -23,8 +23,6 @@ const VITE_BODY = `
   <div class="row" id="parts" role="group" aria-label="Onderdelen in deze selectie"></div>
 </section>`;
 
-const FONTS = 'https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap';
-
 /** Drops the whitespace-only text nodes the hand-written HTML has between its elements and JSX has not. */
 function trimmed<T extends Node>(node: T): T {
   for (const child of [...node.childNodes]) {
@@ -49,13 +47,11 @@ describe('the document', () => {
     expect(metadata.title).toBe('Speeltoestel ArcticFlyer 3D');
   });
 
-  it('[PLAT-4] loads the Barlow and Barlow Condensed fonts, as the Vite page did', () => {
-    const links = [...served().head.querySelectorAll('link')].map(l => ({
-      rel: l.getAttribute('rel'), href: l.getAttribute('href'), crossorigin: l.getAttribute('crossorigin'),
-    }));
-    expect(links).toContainEqual({ rel: 'stylesheet', href: FONTS, crossorigin: null });
-    expect(links).toContainEqual({ rel: 'preconnect', href: 'https://fonts.googleapis.com', crossorigin: null });
-    expect(links).toContainEqual({ rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' });
+  // The Barlow fonts themselves, and that the build serves them from the app's own origin, are checked on the build
+  // (tests/offline.test.ts, [PLAT-4] and [PWA-3]).
+  it('[PWA-3] links nothing on another origin from the head, as the Vite page did with Google\'s fonts', () => {
+    const urls = [...served().head.querySelectorAll('[href], [src]')].map(e => e.getAttribute('href') ?? e.getAttribute('src')!);
+    for (const url of urls) expect(new URL(url, 'https://app.test').origin, url).toBe('https://app.test');
   });
 
   it('[PLAT-4] holds the Vite page\'s elements, with their Dutch texts and ARIA attributes unchanged', () => {
