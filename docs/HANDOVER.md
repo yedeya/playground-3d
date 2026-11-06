@@ -55,7 +55,7 @@ Dat de productpagina de lengte op de grond bedoelt, is een aanname.
 
 ## Coördinaten en belangrijke maten
 
-Maten in millimeters; in de app en USD-bestanden gedeeld door 1000.
+Maten in millimeters; in de GLB en de app gedeeld door 1000 (meters).
 
 - `x` loopt langs de huisframes. De glijbaan zit bij `x < 0`, de ladder bij `x > 2190`.
 - `y` is omhoog.
@@ -74,7 +74,7 @@ model/generator.ts
      en leest hem met src/data/load-model.ts
 ```
 
-De app bevat zelf geen model meer: ze haalt de GLB op zodra de pagina draait. Tot hij binnen is, staat er `Loading model…` en is het paneel leeg. Lukt het ophalen of lezen niet, dan toont `#fail` `The model can't load. Reload the page or try another browser.`. Die twee teksten zijn bewust Engels (besluit 2 in `docs/projects/7.md`). De oude Python-generator `model/build_playground.py` schrijft nog de USDA en `parts.csv` naar `model/output/` (niet in git), maar niets gebruikt die nog.
+De app bevat zelf geen model meer: ze haalt de GLB op zodra de pagina draait. Tot hij binnen is, staat er `Loading model…` en is het paneel leeg. Lukt het ophalen of lezen niet, dan toont `#fail` `The model can't load. Reload the page or try another browser.`. Die twee teksten zijn bewust Engels (besluit 2 in `docs/projects/7.md`). De generator schrijft alleen de GLB; andere uitvoer is er niet meer.
 
 In de GLB is elk onderdeel een knoop met de naam van zijn `id`. In de `extras` van die knoop staan `id`, `module`, `kit` (code uit de handleiding), `group`, `size`, `source`, `natural` (RGB, 0 tot 1) en `name` (de Nederlandse naam die `kindOf` geeft). De geometrie is een lijst losse driehoeken in meters, zonder index, zodat elke plank scherpe hoeken houdt. De kleuren per module staan in de `extras` van de scène.
 
@@ -86,25 +86,9 @@ Het is aan te raden nieuwe gegevens zoals transportgroepen in een eigen databest
 
 ## Hulpmiddelen buiten de app
 
-3D-bestanden voor Quick Look op de Mac maken:
+Het model komt alleen nog uit `model/generator.ts`. `npm run model` schrijft het als `public/models/speeltoestel.glb`, en dat bestand staat in git. Er is één modelformaat, GLB. De oude 3D-scènes, de onderdelenlijst als CSV, het Quick Look-recept en het rendergereedschap voor de Mac zijn weg (besluit 1 in `docs/projects/7.md`). Niets vervangt het USDZ-bestand.
 
-```bash
-python3 -I model/build_playground.py model/output
-```
-
-```bash
-cd model/output && usdzip speeltoestel-modules.usdz speeltoestel-modules.usda
-```
-
-Renders maken om het model te controleren:
-
-```bash
-swiftc model/tools/render3.swift -o /tmp/render3
-```
-
-```bash
-/tmp/render3 model/output/speeltoestel-modules.usdz /tmp 0.64 1.1 0.95 9 -45:22:a 135:22:b 90:88:top
-```
+De app zelf is nu de viewer. Wil je de GLB buiten de app bekijken, open dan `public/models/speeltoestel.glb` in Blender (Bestand → Importeren → glTF 2.0) of sleep hem in een glTF-viewer in de browser. Apple's Reality Converter zet een GLB om naar USDZ voor Quick Look; dat is niet uitgeprobeerd. De kleuren per module staan niet in de GLB-materialen, alleen in de `extras`, dus andere viewers tonen de natuurkleuren.
 
 ## Publiceren
 

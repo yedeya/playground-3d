@@ -11,5 +11,5 @@ The project's stack document (`K-LAYOUT-17`), started by `kanon init`. The secti
 ## Code areas
 
 - `src/` — code: the speeltoestel viewer app
-- `model/` — code: the model generator: the TypeScript one `npm run model` runs (`model/generator.ts`, its GLB writer `model/glb.ts` and its command line `model/cli.ts`), and the Python one it replaced
+- `model/` — code: the model generator: the TypeScript one `npm run model` runs (`model/generator.ts`, its GLB writer `model/glb.ts` and its command line `model/cli.ts`)
 - `tests/` `vitest` — tests: unit tests of the model data, the part helpers and the model generator
