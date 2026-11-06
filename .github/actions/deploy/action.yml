@@ -1,0 +1,86 @@
+# The deploy lane's deploy hook (docs/lanes.md, "The hooks"; [PLAT-9]). Two modes, by `probe`:
+#
+# - `probe: 'false'`, in an environment's `deploy` job: put the build hook's artifact in place, obtain the environment's AWS
+#   credential through GitHub's OIDC token for the role KANON_DEPLOY_TARGET names (the lane hands it in from the repository
+#   variable KANON_DEPLOY_TARGETS), and deploy that build with `sst deploy --stage <environment>`. sst.config.ts's buildCommand
+#   only checks the build is in place, so SST deploys the artifact and builds nothing. Then hand the smoke hook the deployed URL
+#   in `$RUNNER_TEMP/playground-3d-url`, since CloudFront names the address only once the distribution exists.
+# - `probe: 'true'`, in the lane's trust probe, outside every environment: try each listed environment's role with the job's OIDC
+#   token, write `refused`, `obtained` or `unconfigured` for each to `$RUNNER_TEMP/kanon-deploy-probe.json`, and deploy nothing.
+#
+# Neither reads the lane's deploy secret: nothing here needs one.
+name: Deploy
+description: Deploys the build hook's artifact to an environment with sst deploy, or probes each environment's AWS role.
+inputs:
+  environment:
+    description: The environment to deploy; empty in the probe.
+    required: true
+  role:
+    description: production or pre-production; empty in the probe.
+    required: true
+  release:
+    description: The release's tag.
+    required: true
+  sha:
+    description: The release's commit, checked out by Kanon's deploy lane.
+    required: true
+  artifact:
+    description: The directory the build hook filled, downloaded and checked by the lane; empty in the probe.
+    required: true
+  probe:
+    description: "'true' to only try each listed environment's role, 'false' to deploy."
+    required: true
+  environments:
+    description: The environments to probe, separated by spaces; empty when deploying.
+    required: true
+runs:
+  using: composite
+  steps:
+    # THE PROBE.
+    - if: inputs.probe == 'true'
+      uses: actions/setup-node@v6
+      with:
+        node-version: 24
+    - if: inputs.probe == 'true'
+      name: Try each environment's role from outside it
+      shell: bash
+      env:
+        ENVIRONMENTS: ${{ inputs.environments }}
+      run: node "$GITHUB_ACTION_PATH/probe.ts"
+
+    # THE DEPLOY.
+    - if: inputs.probe != 'true'
+      uses: ./.github/actions/project-setup
+    - if: inputs.probe != 'true'
+      name: Put the build in place
+      shell: bash
+      env:
+        ARTIFACT: ${{ inputs.artifact }}
+      run: node "$GITHUB_ACTION_PATH/place.ts" "$ARTIFACT"
+    - if: inputs.probe != 'true'
+      name: Check the lane named the environment's role
+      shell: bash
+      run: |
+        if [ -z "${KANON_DEPLOY_TARGET:-}" ]; then
+          echo "::error::KANON_DEPLOY_TARGET is empty: name this environment's deploy role in the repository variable KANON_DEPLOY_TARGETS (docs/lanes.md, \"Where each role lives\")."
+          exit 1
+        fi
+    # v6.3.0, pinned by commit.
+    - if: inputs.probe != 'true'
+      name: Obtain the environment's AWS credential through OIDC
+      uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd
+      with:
+        role-to-assume: ${{ env.KANON_DEPLOY_TARGET }}
+        role-session-name: playground-3d-${{ inputs.environment }}-deploy
+        audience: sts.amazonaws.com
+        aws-region: eu-central-1
+    - if: inputs.probe != 'true'
+      name: Deploy the build with SST
+      shell: bash
+      env:
+        ENVIRONMENT: ${{ inputs.environment }}
+      run: npx --no-install sst deploy --stage "$ENVIRONMENT"
+    - if: inputs.probe != 'true'
+      name: Hand the smoke hook the deployed URL
+      shell: bash
+      run: node "$GITHUB_ACTION_PATH/url.ts"

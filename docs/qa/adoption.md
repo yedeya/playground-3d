@@ -18,7 +18,7 @@ On a personal account a collaborator has write access, with no Triage role, so a
 
 - **Rulesets:** available.
 - **Merge queue:** not on this plan, so "require branches to be up to date" stays off and the release commit's full CI run catches a stale base (`K-MERGE-7`).
-- **Environments:** no Kanon lane needs one.
+- **Environments:** available. The deploy lane uses one, `production`, with the Owner as its required reviewer and deployments from release tags only; there is no other environment.
 
 ## Bootstrap
 
@@ -30,7 +30,13 @@ On a personal account a collaborator has write access, with no Triage role, so a
 - **Review trigger:** `labelled`
 - **Upstream findings:** `sent with evidence`
 - **Waived doctor finding:** `label.github-default` on `yedeya/playground-3d` for `documentation`, `duplicate`, `good first issue`, `help wanted`, `invalid`, `question`, `wontfix` (kept at adoption: existing and future issues may carry them)
-- **Waived doctor finding:** `deploy.reference-undeclared` on `docs/qa/adoption.md` (playground-3d deploys nothing until the move to SST declares a reference deploy; until then a Lead project can be built but not closed)
+
+## Deploy
+
+- **Environments:** `production`
+- **Reference environment:** `production`
+- **Reference deploy workflow:** `deploy.yml`
+- **Reference deploy job:** `production / deploy`
 
 ## Data
 
