@@ -1,3 +1,4 @@
+/// <reference types="node" />
 // The language the repository is written in. These read the checkout itself, so they need git and the installed TypeScript.
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
