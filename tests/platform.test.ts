@@ -1,12 +1,12 @@
 /// <reference types="node" />
-// The language and the framework the repository is built with. These read the checkout itself, so they need git and the
+// The language, the framework and the infrastructure the repository is built with. These read the checkout itself, so they need git and the
 // installed TypeScript and Next.js.
 import { execFileSync } from 'node:child_process';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { blockCrossSiteDEV } from 'next/dist/server/lib/router-utils/block-cross-site-dev';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import nextConfig from '../next.config';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
@@ -59,5 +59,112 @@ describe('framework', () => {
     for (const host of ['example.com', '8.8.8.8', '172.32.0.1', '192.169.1.1']) {
       expect(blocked(host), host).toBe(true);
     }
+  });
+});
+
+describe('deploy', () => {
+  // The SST config, run for real against stand-ins for the globals SST provides: `$config` hands back what it is given,
+  // and `sst.aws` records every component `run()` constructs, so a resource added later shows up here.
+  type Constructed = { component: string; name: string; args: unknown };
+  type App = {
+    name: string;
+    home: string;
+    removal: string;
+    protect: boolean;
+    providers: { aws: { region: string; defaultTags: { tags: Record<string, string> } } };
+  };
+  type Config = { app(input: { stage: string }): App; run(): Promise<unknown> };
+
+  const loadConfig = async () => {
+    const constructed: Constructed[] = [];
+    const recorder = (component: string) => class {
+      url = `https://${component}.cloudfront.net`;
+      constructor(name: string, args?: unknown) {
+        constructed.push({ component, name, args });
+      }
+    };
+    vi.stubGlobal('$config', (config: unknown) => config);
+    vi.stubGlobal('sst', {
+      aws: new Proxy({}, { get: (_, component) => recorder(String(component)) }),
+    });
+    // Not a literal specifier, so tsc does not follow it into a file whose globals only `sst install` declares.
+    const url = pathToFileURL(fileURLToPath(new URL('../sst.config.ts', import.meta.url))).href;
+    const config = (await import(/* @vite-ignore */ url)).default as Config;
+    return { config, constructed };
+  };
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('[PLAT-6] deploys the one stage production in eu-central-1, retains and protects its resources, and tags every resource with project and stage', async () => {
+    const { config } = await loadConfig();
+    const app = config.app({ stage: 'production' });
+    expect(app.name).toBe('playground-3d');
+    expect(app.home).toBe('aws');
+    expect(app.removal).toBe('retain');
+    expect(app.protect).toBe(true);
+    expect(Object.keys(app.providers)).toEqual(['aws']);
+    expect(app.providers.aws.region).toBe('eu-central-1');
+    expect(app.providers.aws.defaultTags).toEqual({ tags: { project: 'playground-3d', stage: 'production' } });
+    for (const stage of ['dev', 'staging', 'Production', 'production-2', 'alice', '']) {
+      expect(() => config.app({ stage }), stage).toThrow(/production/);
+    }
+  });
+
+  it('[PLAT-6] declares one sst.aws.Nextjs site and no other resource, with no custom domain, so it serves on CloudFront\'s own address', async () => {
+    const { config, constructed } = await loadConfig();
+    const output = await config.run();
+    expect(constructed).toHaveLength(1);
+    const [site] = constructed;
+    expect(site.component).toBe('Nextjs');
+    expect(site.args === undefined || !Object.hasOwn(site.args as object, 'domain')).toBe(true);
+    expect(output).toEqual({ url: 'https://Nextjs.cloudfront.net' });
+  });
+
+  describe('the production deploy role\'s trust policy', () => {
+    const subject = 'repo:yedeya@46228687/playground-3d@1446091910:environment:production';
+    const policyPath = 'infra/aws/production-deploy-role.trust.json';
+
+    it('[PLAT-7] trusts only GitHub\'s OIDC provider, with the audience sts.amazonaws.com and production\'s exact subject by StringEquals', () => {
+      const policy = readJson(policyPath);
+      expect(policy.Version).toBe('2012-10-17');
+      expect(policy.Statement).toHaveLength(1);
+      const [statement] = policy.Statement;
+      expect(Object.keys(statement).sort()).toEqual(['Action', 'Condition', 'Effect', 'Principal']);
+      expect(statement.Effect).toBe('Allow');
+      expect(statement.Action).toBe('sts:AssumeRoleWithWebIdentity');
+      expect(statement.Principal).toEqual({
+        Federated: 'arn:aws:iam::<account-id>:oidc-provider/token.actions.githubusercontent.com',
+      });
+      expect(statement.Condition).toEqual({
+        StringEquals: {
+          'token.actions.githubusercontent.com:aud': 'sts.amazonaws.com',
+          'token.actions.githubusercontent.com:sub': subject,
+        },
+      });
+    });
+
+    it('[PLAT-7] names no branch, tag or wildcard', () => {
+      const text = readFileSync(new URL(`../${policyPath}`, import.meta.url), 'utf8');
+      for (const forbidden of ['*', '?', 'ref:', 'refs/', 'heads/', 'tags/', 'StringLike', 'ForAnyValue', 'ForAllValues', 'NotPrincipal']) {
+        expect(text.includes(forbidden), forbidden).toBe(false);
+      }
+    });
+
+    it('[PLAT-7] holds no AWS account id in any file under infra/aws/', () => {
+      const dir = fileURLToPath(new URL('../infra/aws/', import.meta.url));
+      const files = (function walk(path: string): string[] {
+        return readdirSync(path).flatMap(entry => {
+          const full = `${path}/${entry}`;
+          return statSync(full).isDirectory() ? walk(full) : [full];
+        });
+      })(dir.replace(/\/$/, ''));
+      expect(files.length).toBeGreaterThan(0);
+      for (const file of files) {
+        // An AWS account id is twelve digits; the subject's numeric owner and repository ids are not.
+        expect(readFileSync(file, 'utf8').match(/(?<!\d)\d{12}(?!\d)/g), file).toBeNull();
+      }
+    });
   });
 });
