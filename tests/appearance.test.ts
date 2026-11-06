@@ -1,10 +1,10 @@
 import * as THREE from 'three';
 import { describe, expect, it } from 'vitest';
 import data from '../src/data/speeltoestel.json';
-import { SELECT, appearanceOf, applyAppearance, createXray } from '../src/viewer/appearance.js';
-import { partMesh } from '../src/viewer/meshes.js';
-import type { Rgb } from '../src/domain/model.js';
-import type { AppState } from '../src/store.js';
+import { SELECT, appearanceOf, applyAppearance, createXray } from '../src/viewer/appearance';
+import { partMesh } from '../src/viewer/meshes';
+import type { Rgb } from '../src/domain/model';
+import type { AppState } from '../src/store';
 
 const part = (id: string) => data.parts.find(p => p.id === id)!;
 const srgb = ([r, g, b]: Rgb) => new THREE.Color().setRGB(r, g, b, THREE.SRGBColorSpace);

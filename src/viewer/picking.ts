@@ -1,8 +1,8 @@
 // Tap detection and tap picking. Needs three.js scene objects and a camera, but no renderer.
 import * as THREE from 'three';
-import type { Filter, Part } from '../domain/model.js';
-import { matchesFilter } from '../domain/parts.js';
-import type { PartMesh } from './meshes.js';
+import type { Filter, Part } from '../domain/model';
+import { matchesFilter } from '../domain/parts';
+import type { PartMesh } from './meshes';
 
 export const TAP_MAX_MOVE_PX = 8;
 export const TAP_MAX_MS = 500;

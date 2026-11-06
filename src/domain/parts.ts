@@ -1,5 +1,5 @@
 // Domain knowledge about the parts: Dutch names and how a raw model record is shown. No DOM or 3D here.
-import type { Filter, ModuleCode, Part, Rgb } from './model.js';
+import type { Filter, ModuleCode, Part, Rgb } from './model';
 
 export const MODULES: Readonly<Record<ModuleCode, string>> = {
   A45: 'Huis', F34: 'Dak', C14: 'Ladder', D42: 'Schommelsteun', E24: 'Schommelbalk',

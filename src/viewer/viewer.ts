@@ -1,15 +1,17 @@
 // Three.js scene: one mesh per part, orbit controls, tap picking. Renders on demand to spare the phone battery.
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import type { Model, Part } from '../domain/model.js';
-import type { AppState, Store } from '../store.js';
-import { applyAppearance, createXray } from './appearance.js';
-import { partMesh } from './meshes.js';
-import { createTapTracker, pickPart } from './picking.js';
+import type { Model, Part } from '../domain/model';
+import type { AppState, Store } from '../store';
+import { applyAppearance, createXray } from './appearance';
+import { partMesh } from './meshes';
+import { createTapTracker, pickPart } from './picking';
 
 export interface Viewer {
   /** Puts the camera back where the viewer opened. */
   home(): void;
+  /** Unsubscribes from the store, removes the viewer's listeners and observer, and frees the renderer and the GPU resources. */
+  dispose(): void;
 }
 
 export function createViewer({ canvas, data, store, onPick }: {
@@ -94,14 +96,34 @@ export function createViewer({ canvas, data, store, onPick }: {
     draw();
   }
 
-  new ResizeObserver(fit).observe(frame);
+  const observer = new ResizeObserver(fit);
+  observer.observe(frame);
   const rect = frame.getBoundingClientRect();
   camera.aspect = rect.width / Math.max(rect.height, 1);
   camera.updateProjectionMatrix();
   fit();
   home();
-  store.subscribe(apply);
+  const unsubscribe = store.subscribe(apply);
   apply(store.get());
 
-  return { home };
+  function dispose() {
+    unsubscribe();
+    observer.disconnect();
+    canvas.removeEventListener('pointerdown', tracker.down);
+    window.removeEventListener('pointerup', tracker.up);
+    controls.removeEventListener('change', draw);
+    controls.dispose();
+    for (const mesh of [...meshes, xray]) {
+      mesh.geometry.dispose();
+      mesh.material.dispose();
+    }
+    for (const { userData: { edges } } of meshes) {
+      edges.geometry.dispose();
+      edges.material.dispose();
+    }
+    grid.dispose();
+    renderer.dispose();
+  }
+
+  return { home, dispose };
 }

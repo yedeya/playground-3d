@@ -11,6 +11,7 @@ De gebruiker wil een houten speeltoestel (Wickey ArcticFlyer, SKU 625630_k) in g
 Werkt:
 - Parametrisch model met 161 onderdelen in 11 modules, gebouwd uit de handleiding.
 - Webapp: draaien en zoomen, tikken op een onderdeel, filteren op module of op geschatte delen, wisselen tussen module- en natuurkleuren.
+- De webapp is een Next.js-app (App Router) in TypeScript. Paneel en viewer zijn gewone modules die `src/app/speeltoestel-app.tsx` in de browser start en weer opruimt.
 - Ladder en glijbaan staan op verzoek van de gebruiker omgekeerd ten opzichte van de handleiding (`SWAP_LADDER_SLIDE` in `model/build_playground.py`).
 
 Ontbreekt nog:

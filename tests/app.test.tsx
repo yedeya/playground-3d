@@ -1,20 +1,40 @@
 // @vitest-environment jsdom
-// The whole page as main.js wires it. jsdom has no WebGL, so the 3D viewer cannot start here.
+// The whole page as the client component wires it. jsdom has no WebGL, so the 3D viewer cannot start here.
+import { StrictMode, act } from 'react';
+import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi, type MockInstance } from 'vitest';
-import { loadPage } from './page.js';
+import SpeeltoestelApp from '../src/app/speeltoestel-app';
+import { loadPage } from './page';
+
+(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
 const $ = (selector: string) => document.querySelector<HTMLElement>(selector)!;
 const chip = (row: string, key: string) =>
   [...document.querySelectorAll<HTMLButtonElement>(`#${row} > button`)].find(b => b.dataset.key === key)!;
 
 let consoleError: MockInstance<typeof console.error>;
-beforeEach(async () => {
+let root: Root | null = null;
+
+/** Mounts the client component the way `next dev` does: under strict mode, which mounts it, unmounts it and mounts it again. */
+function mount() {
+  root = createRoot(document.createElement('div'));
+  act(() => root!.render(<StrictMode><SpeeltoestelApp /></StrictMode>));
+}
+
+function unmount() {
+  act(() => root!.unmount());
+  root = null;
+}
+
+beforeEach(() => {
   loadPage();
   consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
-  vi.resetModules();
-  await import('../src/main.js');
+  mount();
 });
-afterEach(() => consoleError.mockRestore());
+afterEach(() => {
+  if (root) unmount();
+  consoleError.mockRestore();
+});
 
 describe('page', () => {
   it('[APP-12] opens in module colours', () => {
@@ -48,5 +68,28 @@ describe('page', () => {
     $('#colour').click();
     expect(document.body.classList.contains('natural')).toBe(true);
     expect($('#colour').textContent).toBe('Modulekleur');
+  });
+});
+
+describe('mounting under strict mode without the viewer', () => {
+  it('leaves one module row, and one colour button handler that toggles once per click', () => {
+    expect(document.querySelectorAll('#modules > button')).toHaveLength(13);
+    $('#colour').click();
+    expect(document.body.classList.contains('natural')).toBe(true);
+    $('#colour').click();
+    expect(document.body.classList.contains('natural')).toBe(false);
+  });
+
+  it('gives the page back as the route rendered it on unmount', () => {
+    $('#colour').click();
+    chip('modules', 'C14').click();
+    unmount();
+    expect(document.body.classList.contains('natural')).toBe(false);
+    const fresh = document.createElement('body');
+    fresh.innerHTML = document.body.innerHTML;
+    // three.js labels the canvas before it finds no WebGL; that label is all the failed start leaves.
+    fresh.querySelector('canvas')!.removeAttribute('data-engine');
+    loadPage();
+    expect(fresh.innerHTML).toBe(document.body.innerHTML);
   });
 });

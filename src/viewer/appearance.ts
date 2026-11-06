@@ -1,9 +1,9 @@
 // How the state looks in the scene: a part's colour, emission and transparency, and the x-ray of the selected part.
 import * as THREE from 'three';
-import type { ModuleCode, Part, Rgb } from '../domain/model.js';
-import { matchesFilter } from '../domain/parts.js';
-import type { AppState } from '../store.js';
-import type { PartMesh } from './meshes.js';
+import type { ModuleCode, Part, Rgb } from '../domain/model';
+import { matchesFilter } from '../domain/parts';
+import type { AppState } from '../store';
+import type { PartMesh } from './meshes';
 
 export const SELECT = 0xff1f6b;
 
