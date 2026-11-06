@@ -9,6 +9,7 @@
     "incremental": false,
     "isolatedModules": true,
     "verbatimModuleSyntax": true,
+    "allowImportingTsExtensions": true,
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "allowArbitraryExtensions": true,

@@ -25,16 +25,20 @@ De ontwikkelserver van Next.js luistert op alle netwerkadressen, op poort 3000. 
 | `npm run typecheck` | Controleert de TypeScript-types (`tsc --noEmit`, strikt) |
 | `npm run build` | Bouwt de app met Next.js naar `.next/` |
 | `npm run preview` | Start de build lokaal (`next start`), ook op alle netwerkadressen |
-| `npm run model` | Genereert het 3D-model opnieuw en werkt `src/data/speeltoestel.json` bij |
+| `npm run model` | Genereert het 3D-model opnieuw met de TypeScript-generator en schrijft `public/models/speeltoestel.glb`; `npm run model -- --baseline` werkt ook `tests/fixtures/model-baseline.json` bij |
 
-`npm run model` heeft alleen Python 3 nodig, zonder extra pakketten.
+`npm run model` heeft alleen Node nodig: Node draait de TypeScript direct, zonder extra pakketten.
 
 ## Structuur
 
 | Pad | Inhoud |
 |---|---|
-| `model/build_playground.py` | Bron van het model: alle geometrie, in millimeters, met controle tegen de stuklijst |
-| `src/data/speeltoestel.json` | Gegenereerd model voor de app; niet met de hand aanpassen |
+| `model/generator.ts` | Bron van het model: alle geometrie, in millimeters, met controle tegen de stuklijst |
+| `model/glb.ts` | Schrijft het model als GLB: een knoop per onderdeel, met de gegevens en de Nederlandse naam in `extras` |
+| `model/cli.ts` | Wat `npm run model` draait: bouwt het model en schrijft de GLB, en op verzoek de baseline |
+| `model/build_playground.py` | De oude Python-generator; `npm run model` gebruikt hem niet meer |
+| `public/models/speeltoestel.glb` | Gegenereerd model als GLB; niet met de hand aanpassen |
+| `src/data/speeltoestel.json` | Het model dat de app nu nog laadt; `npm run model` werkt het niet meer bij |
 | `src/data/speeltoestel.d.json.ts` | Het type van dat model, zodat TypeScript het niet uit de JSON afleidt |
 | `src/domain/model.ts` | De types van de modeldata: een onderdeel (`Part`), het model, de modulecodes en het filter |
 | `src/domain/parts.ts` | Nederlandse namen, opmaak van maten en de filterregels |
