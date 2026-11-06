@@ -1,29 +1,39 @@
 import { describe, expect, it } from 'vitest';
-import data from '../src/data/speeltoestel.json';
 import type { Part } from '../src/domain/model';
 import { MODULES, MODULE_ORDER, kindOf, kitText, matchesFilter, sizeText } from '../src/domain/parts';
+import { committedModel } from './model-glb';
+
+// The model the app loads: the committed GLB, read the way the app reads it.
+const data = await committedModel();
+const geometryOf = (id: string) => data.geometries[data.parts.findIndex(p => p.id === id)]!;
 
 describe('model data', () => {
-  it('[APP-1] holds 161 parts with unique ids, one of the 11 module codes and whole triangles', () => {
+  it('[APP-1] the GLB holds 161 parts with unique ids, one of the 11 module codes and whole unindexed triangles', () => {
     expect(MODULE_ORDER).toHaveLength(11);
     expect(data.parts).toHaveLength(161);
+    expect(data.geometries).toHaveLength(161);
     expect(new Set(data.parts.map(p => p.id)).size).toBe(161);
-    for (const p of data.parts) {
+    for (const [i, p] of data.parts.entries()) {
       expect(MODULE_ORDER, p.id).toContain(p.module);
       expect(MODULES[p.module], p.id).toBeTruthy();
-      expect(p.tri.length, p.id).toBeGreaterThan(0);
-      expect(p.tri.length % 9, p.id).toBe(0);
+      const geometry = data.geometries[i]!;
+      expect(geometry.index, p.id).toBeNull();
+      const position = geometry.getAttribute('position');
+      expect(position.itemSize, p.id).toBe(3);
+      expect(position.count, p.id).toBeGreaterThan(0);
+      expect(position.count % 3, p.id).toBe(0);
     }
   });
 
-  it('[APP-2] marks exactly 22 parts as estimated', () => {
+  it('[APP-2] the GLB marks exactly 22 parts as estimated', () => {
     expect(data.parts.filter(p => p.source === 'estimate')).toHaveLength(22);
   });
 
-  it('[APP-3] [TRANS-19] has the ladder and slide swapped compared with the manual', () => {
+  it('[APP-3] [TRANS-19] the GLB has the ladder and slide swapped compared with the manual', () => {
+    /** The part's x coordinates in mm; the GLB stores metres. */
     const xs = (id: string) => {
-      const { tri } = data.parts.find(p => p.id === id)!;
-      return tri.filter((_, i) => i % 3 === 0);
+      const position = geometryOf(id).getAttribute('position');
+      return Array.from({ length: position.count }, (_, i) => position.getX(i) * 1000);
     };
     expect(Math.min(...xs('C14_S1'))).toBeGreaterThan(2190);
     expect(Math.min(...xs('G01_slide'))).toBeLessThan(0);

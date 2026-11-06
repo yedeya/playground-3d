@@ -5,6 +5,7 @@ import { StrictMode, act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AppState, Listener, Store } from '../src/store';
+import { modelShown, stubModelFetch } from './model-glb';
 import { loadPage } from './page';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -94,12 +95,18 @@ function trackListeners() {
 
 let root: Root | null = null;
 
-/** Creates the React root first, so the listeners React itself puts on it are not counted as the app's. */
+/**
+ * Creates the React root first, so the listeners React itself puts on it are not counted as the app's. Then waits for
+ * the model the app fetches, and for every fetch it started to be read.
+ */
 async function mount(strict: boolean) {
   const { default: SpeeltoestelApp } = await import('../src/app/speeltoestel-app');
   root = createRoot(document.createElement('div'));
   const listeners = trackListeners();
+  const fetch = stubModelFetch();
   act(() => root!.render(strict ? <StrictMode><SpeeltoestelApp /></StrictMode> : <SpeeltoestelApp />));
+  await modelShown();
+  await Promise.allSettled(fetch.mock.results.map(r => r.value));
   return listeners;
 }
 
@@ -135,8 +142,9 @@ const inPage = (live: Listening[]) =>
 describe('mounting and unmounting the viewer and the panel', () => {
   it('[PLAT-5] leaves one set of module chips, one WebGL renderer and no listener of the first mount on the store, under strict mode', async () => {
     await mount(true);
-    // Strict mode mounted, unmounted and mounted again: two of everything were created, one is left.
-    expect(seen.renderers).toHaveLength(2);
+    // Strict mode mounted, unmounted and mounted again: two stores were created, one is left. The first mount was
+    // gone before its model arrived, so only the second built a viewer, and its renderer is the one left.
+    expect(seen.renderers).toHaveLength(1);
     expect(seen.stores).toHaveLength(2);
     expect(moduleChips()).toBe(13);
     expect(liveRenderers()).toBe(1);

@@ -1,4 +1,4 @@
-// The model data's types, written once here instead of inferred from the generated JSON (see src/data/speeltoestel.d.json.ts).
+// The model data's types: the parts the generator builds, and the records the app reads back from the GLB it writes.
 
 /** The 11 module codes of the manual. */
 export type ModuleCode = 'A45' | 'F34' | 'C14' | 'D42' | 'E24' | 'B07' | 'A47' | 'G28' | 'G24' | 'H10' | 'G01';
@@ -26,7 +26,13 @@ export interface Part {
   tri: readonly number[];
 }
 
-/** The generated model the app loads. */
+/** One part as the app reads it from the GLB's extras: the generator's fields without its triangles, plus its Dutch name. */
+export interface ModelPart extends Omit<Part, 'tri'> {
+  /** The Dutch name the app's `kindOf` gave the part when the generator wrote the GLB, such as `Laddersport`. */
+  name: string;
+}
+
+/** The model the generator builds, and the baseline fixture holds. */
 export interface Model {
   parts: readonly Part[];
   moduleColors: Readonly<Record<ModuleCode, Rgb>>;

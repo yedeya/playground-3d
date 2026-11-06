@@ -6,7 +6,8 @@ import { fileURLToPath } from 'node:url';
 import { afterAll, describe, expect, it } from 'vitest';
 import { Color, type Mesh, type MeshStandardMaterial, SRGBColorSpace } from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import jsonModel from '../src/data/speeltoestel.json';
+// The JSON model the app loaded before the GLB, byte for byte.
+import jsonModel from './fixtures/model-baseline.json';
 import { kindOf } from '../src/domain/parts.js';
 import { build } from '../model/generator.js';
 import { GLB_PATH, toGlb } from '../model/glb.js';

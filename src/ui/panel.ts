@@ -1,12 +1,12 @@
 // Bottom panel: card with the selected part, module chips, and the part list of the current filter.
-import type { ModuleCode, Part, Rgb } from '../domain/model';
-import { MODULES, MODULE_ORDER, kindOf, kitText, matchesFilter, sizeText, toCssColor } from '../domain/parts';
+import type { ModelPart, ModuleCode, Rgb } from '../domain/model';
+import { MODULES, MODULE_ORDER, kitText, matchesFilter, sizeText, toCssColor } from '../domain/parts';
 import type { Actions } from '../actions';
 import type { AppState, Store } from '../store';
 import { byId } from './dom';
 
-/** The fields of a part the panel shows. */
-export type PanelPart = Pick<Part, 'id' | 'module' | 'group' | 'kit' | 'size' | 'source'>;
+/** The fields of a part the panel shows; `name` is the Dutch kind the GLB gives it. */
+export type PanelPart = Pick<ModelPart, 'id' | 'module' | 'kit' | 'size' | 'source' | 'name'>;
 
 /** The model data the panel reads. */
 export interface PanelData {
@@ -31,7 +31,7 @@ function cardHtml(state: AppState, parts: readonly PanelPart[], estimatedCount: 
     const source = part.source === 'manual'
       ? '<span class="badge manual">Uit handleiding</span>'
       : '<span class="badge estimate">Geschat</span>';
-    return `<h2>${part.id} <span class="kind">${kindOf(part)}</span></h2>
+    return `<h2>${part.id} <span class="kind">${part.name}</span></h2>
       <dl><dt>Module</dt><dd>${part.module} ${MODULES[part.module]}</dd>
       <dt>Handleiding</dt><dd>${kitText(part.kit)}</dd>
       ${size ? `<dt>Maat</dt><dd>${size}</dd>` : ''}

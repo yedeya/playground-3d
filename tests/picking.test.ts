@@ -89,7 +89,9 @@ describe('which part a tap picks', () => {
     const x0 = (dxPx - halfPx) * mmPerPx, x1 = (dxPx + halfPx) * mmPerPx;
     const y0 = -(dyPx + halfPx) * mmPerPx, y1 = -(dyPx - halfPx) * mmPerPx;
     const tri = [x0, y0, z, x1, y0, z, x1, y1, z, x0, y0, z, x1, y1, z, x0, y1, z];
-    return partMesh({ id, module, source, tri, natural: [1, 1, 1] });
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(tri.map(v => v / 1000)), 3));
+    return partMesh({ id, module, source, natural: [1, 1, 1] }, geometry);
   }
   const pick = (meshes: ReturnType<typeof square>[], filter: Filter = null, dx = 0, dy = 0) =>
     pickPart({ x: centre.x + dx, y: centre.y + dy, rect, camera, meshes, filter })?.id ?? null;

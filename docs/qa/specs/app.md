@@ -1,14 +1,14 @@
 # The viewer app
 
-What the speeltoestel viewer does for the person using it: the model data it loads, the Dutch texts it shows, its filters, its panel, its colour modes and its 3D viewer. Project #6 seeded these clauses to lock the app's behaviour before it moves from Vite to Next.js, so the move can be checked against them; they describe the app as it was on Vite. This area holds only the clauses projects have seeded so far. Every clause is `[seed]` until a human promotes it (`K-SPEC-8`).
+What the speeltoestel viewer does for the person using it: the model data it loads, the Dutch texts it shows, its filters, its panel, its colour modes and its 3D viewer. Project #6 seeded these clauses to lock the app's behaviour before it moves from Vite to Next.js, so the move can be checked against them; they describe the app as it was on Vite. Project #7 reworded `[APP-1]` to `[APP-3]` when the app moved from its bundled JSON model to the GLB it fetches (`docs/qa/specs/model.md`). This area holds only the clauses projects have seeded so far. Every clause is `[seed]` until a human promotes it (`K-SPEC-8`).
 
 **Id prefix:** `APP`
 
 ## Model data
 
-- `[APP-1]` `[seed]` The model data the app loads holds 161 parts with 161 distinct ids; each part's `module` is one of the 11 module codes the app names, and each part's `tri` list is non-empty with a length divisible by 9.
-- `[APP-2]` `[seed]` Exactly 22 parts of the model data carry `source: "estimate"`.
-- `[APP-3]` `[seed]` The ladder and the slide stand swapped against the manual: every x coordinate of part `C14_S1` is above 2190 mm, and the smallest x coordinate of part `G01_slide` is below 0.
+- `[APP-1]` `[seed]` The model the app loads, the GLB `public/models/speeltoestel.glb` read as the app reads it, holds 161 parts with 161 distinct ids; each part's `module` is one of the 11 module codes the app names, and each part's geometry is unindexed, with a non-empty list of vertex positions whose count is divisible by 3, so whole triangles.
+- `[APP-2]` `[seed]` Exactly 22 parts of the GLB the app loads carry `source: "estimate"`.
+- `[APP-3]` `[seed]` The ladder and the slide stand swapped against the manual: in the GLB the app loads, which stores metres, every x coordinate of part `C14_S1` is above 2190 mm, and the smallest x coordinate of part `G01_slide` is below 0.
 
 ## Part texts and filters
 

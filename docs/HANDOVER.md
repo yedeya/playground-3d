@@ -70,16 +70,15 @@ Maten in millimeters; in de app en USD-bestanden gedeeld door 1000.
 ```
 model/generator.ts
   → public/models/speeltoestel.glb  (wel in git, via npm run model)
-
-src/data/speeltoestel.json  (wel in git, door niets meer bijgewerkt)
-  → de app
+  → de app haalt hem op bij het openen (/models/speeltoestel.glb)
+     en leest hem met src/data/load-model.ts
 ```
 
-De app laadt nog de JSON, tot ze overstapt op de GLB. De oude Python-generator `model/build_playground.py` schrijft nog de USDA en `parts.csv` naar `model/output/` (niet in git), maar `npm run model` draait hem niet meer.
+De app bevat zelf geen model meer: ze haalt de GLB op zodra de pagina draait. Tot hij binnen is, staat er `Loading model…` en is het paneel leeg. Lukt het ophalen of lezen niet, dan toont `#fail` `The model can't load. Reload the page or try another browser.`. Die twee teksten zijn bewust Engels (besluit 2 in `docs/projects/7.md`). De oude Python-generator `model/build_playground.py` schrijft nog de USDA en `parts.csv` naar `model/output/` (niet in git), maar niets gebruikt die nog.
 
-Een onderdeel in de JSON heeft `id`, `module`, `kit` (code uit de handleiding), `group`, `size`, `source`, `natural` (RGB) en `tri` (driehoeken als platte lijst in mm).
+In de GLB is elk onderdeel een knoop met de naam van zijn `id`. In de `extras` van die knoop staan `id`, `module`, `kit` (code uit de handleiding), `group`, `size`, `source`, `natural` (RGB, 0 tot 1) en `name` (de Nederlandse naam die `kindOf` geeft). De geometrie is een lijst losse driehoeken in meters, zonder index, zodat elke plank scherpe hoeken houdt. De kleuren per module staan in de `extras` van de scène.
 
-Pas geometrie alleen aan in de generator en draai daarna `npm run model -- --baseline` en `npm test`. Zolang de app de JSON laadt, werkt dat de JSON niet bij: wacht met geometriewijzigingen tot de app de GLB laadt, of volg §6 van `docs/projects/7.md`. Een test legt vast dat er 161 onderdelen en 22 schattingen zijn; pas die bewust aan als het aantal klopt maar veranderd is.
+Pas geometrie alleen aan in de generator en draai daarna `npm run model -- --baseline` en `npm test`: dat werkt de GLB en `tests/fixtures/model-baseline.json` samen bij, en de app laadt de nieuwe GLB. Een test legt vast dat er 161 onderdelen en 22 schattingen zijn; pas die bewust aan als het aantal klopt maar veranderd is.
 
 Het is aan te raden nieuwe gegevens zoals transportgroepen in een eigen databestand te zetten, gekoppeld aan het onderdeel-`id`. Dan overschrijft de generator ze niet.
 

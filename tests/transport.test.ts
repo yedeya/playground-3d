@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import data from '../src/data/speeltoestel.json';
+// The model in whole-millimetre triangles, which the transport rules read: the baseline fixture, the JSON model the app
+// loaded before it moved to the GLB, byte for byte.
+import data from './fixtures/model-baseline.json';
 import type { Part, Rgb } from '../src/domain/model';
 import {
   CONTACT_MARGIN_MM, DISPLACED_MM, LABEL_TEXT_MAX, TAPE_PALETTE,

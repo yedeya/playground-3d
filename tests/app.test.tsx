@@ -1,9 +1,11 @@
 // @vitest-environment jsdom
-// The whole page as the client component wires it. jsdom has no WebGL, so the 3D viewer cannot start here.
+// The whole page as the client component wires it, with the committed GLB as the model it fetches. jsdom has no WebGL,
+// so the 3D viewer cannot start here.
 import { StrictMode, act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi, type MockInstance } from 'vitest';
 import SpeeltoestelApp from '../src/app/speeltoestel-app';
+import { modelShown, stubModelFetch } from './model-glb';
 import { loadPage } from './page';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -15,10 +17,14 @@ const chip = (row: string, key: string) =>
 let consoleError: MockInstance<typeof console.error>;
 let root: Root | null = null;
 
-/** Mounts the client component the way `next dev` does: under strict mode, which mounts it, unmounts it and mounts it again. */
-function mount() {
+/**
+ * Mounts the client component the way `next dev` does: under strict mode, which mounts it, unmounts it and mounts it
+ * again. Then waits for the model it fetches.
+ */
+async function mount() {
   root = createRoot(document.createElement('div'));
   act(() => root!.render(<StrictMode><SpeeltoestelApp /></StrictMode>));
+  await modelShown();
 }
 
 function unmount() {
@@ -26,13 +32,15 @@ function unmount() {
   root = null;
 }
 
-beforeEach(() => {
+beforeEach(async () => {
   loadPage();
   consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
-  mount();
+  stubModelFetch();
+  await mount();
 });
 afterEach(() => {
   if (root) unmount();
+  vi.unstubAllGlobals();
   consoleError.mockRestore();
 });
 
@@ -47,7 +55,7 @@ describe('page', () => {
     expect(consoleError).toHaveBeenCalled();
   });
 
-  it('[APP-15] keeps the filters, part list, card and colour button working without the viewer', () => {
+  it('[APP-15] [MODEL-11] keeps the filters, part list, card and colour button working without the viewer once the GLB has loaded', () => {
     expect($('#stats').textContent).toBe('161 onderdelen · 11 modules · 22 geschat');
     expect($('#card h2').textContent).toBe('Tik op een onderdeel');
 
