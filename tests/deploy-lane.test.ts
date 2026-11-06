@@ -54,6 +54,9 @@ const tree = (dir: string): string[] =>
     .map(entry => join(entry.parentPath, entry.name).slice(dir.length + 1))
     .sort();
 
+// The OpenNext the build hook runs: package.json pins it, and sst.config.ts names it to SST's Nextjs as its openNextVersion.
+const OPEN_NEXT = '3.9.16';
+
 // Any command that builds the app: OpenNext's, Next's, or the package's build script.
 const BUILDS = /\bopen-next(@[\w.]+)?\s+build\b|\bnext\s+build\b|\bnpm\s+run\s+build\b|\bsst\s+build\b/;
 
@@ -91,9 +94,11 @@ describe('the build hook', () => {
     const builds = steps.filter(step => BUILDS.test(step.run ?? ''));
     expect(builds).toHaveLength(1);
     expect(builds[0].run!.trim()).toBe('npx --no-install open-next build');
-    // The installed OpenNext, at the version SST 4.17's Nextjs defaults to, never one npx downloads at build time.
+    // The installed OpenNext, pinned exactly, never one npx downloads at build time. 3.9.16 is the lowest release past SST 4.17's
+    // default 3.9.14 whose lockfile clears 3.9.14's critical fast-xml-parser advisory (#63); the lockfile installs that same version.
     const pkg = JSON.parse(read('package.json'));
-    expect(pkg.devDependencies['@opennextjs/aws']).toBe('3.9.14');
+    expect(pkg.devDependencies['@opennextjs/aws']).toBe(OPEN_NEXT);
+    expect(JSON.parse(read('package-lock.json')).packages['node_modules/@opennextjs/aws'].version).toBe(OPEN_NEXT);
     // A failed build fails the hook: every step is a plain shell step, none continues on error.
     for (const step of steps) {
       expect(step['continue-on-error'], step.name).toBeUndefined();
@@ -234,13 +239,13 @@ describe('the deploy hook', () => {
   describe('the SST config the hook deploys', () => {
     type Config = { run(): Promise<unknown> };
     const loadSite = async () => {
-      const constructed: { name: string; args?: { buildCommand?: string } }[] = [];
+      const constructed: { name: string; args?: { buildCommand?: string; openNextVersion?: string } }[] = [];
       vi.stubGlobal('$config', (config: unknown) => config);
       vi.stubGlobal('sst', {
         aws: {
           Nextjs: class {
             url = 'https://Nextjs.cloudfront.net';
-            constructor(name: string, args?: { buildCommand?: string }) {
+            constructor(name: string, args?: { buildCommand?: string; openNextVersion?: string }) {
               constructed.push({ name, args });
             }
           },
@@ -272,6 +277,12 @@ describe('the deploy hook', () => {
       write(join(placed, '.open-next/open-next.output.json'), '{}');
       expect(spawnSync('sh', ['-c', command!], { cwd: placed }).status).toBe(0);
       expect(tree(placed)).toEqual(['.open-next/open-next.output.json']);
+    });
+
+    it('names the build hook\'s pinned OpenNext as the site\'s openNextVersion, so SST never assumes its own default', async () => {
+      const site = await loadSite();
+      expect(site.args?.openNextVersion).toBe(OPEN_NEXT);
+      expect(JSON.parse(read('package.json')).devDependencies['@opennextjs/aws']).toBe(site.args?.openNextVersion);
     });
   });
 
