@@ -1,7 +1,7 @@
 // What the panel and the viewer may ask of the store.
-import type { Filter, Part } from './domain/model.js';
-import { matchesFilter } from './domain/parts.js';
-import type { Store } from './store.js';
+import type { Filter, Part } from './domain/model';
+import { matchesFilter } from './domain/parts';
+import type { Store } from './store';
 
 /** The fields of a part the actions read. */
 export type ActionPart = Pick<Part, 'id' | 'module' | 'source'>;

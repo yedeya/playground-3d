@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import data from '../src/data/speeltoestel.json';
-import { createActions } from '../src/actions.js';
-import { createStore, type AppState } from '../src/store.js';
+import { createActions } from '../src/actions';
+import { createStore, type AppState } from '../src/store';
 
 const part = (id: string) => data.parts.find(p => p.id === id)!;
 const estimated = data.parts.find(p => p.source === 'estimate')!;

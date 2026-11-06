@@ -14,7 +14,7 @@ npm ci
 npm run dev
 ```
 
-Vite toont ook een netwerkadres. Daarmee open je de app op een telefoon in hetzelfde wifi-netwerk.
+De ontwikkelserver van Next.js luistert op alle netwerkadressen, op poort 3000. Open op een telefoon in hetzelfde wifi-netwerk `http://<IP-adres van deze computer>:3000`. `next.config.ts` staat dat toe voor adressen in het lokale netwerk.
 
 ## Opdrachten
 
@@ -23,8 +23,8 @@ Vite toont ook een netwerkadres. Daarmee open je de app op een telefoon in hetze
 | `npm run dev` | Start de ontwikkelserver |
 | `npm test` | Draait de unittests |
 | `npm run typecheck` | Controleert de TypeScript-types (`tsc --noEmit`, strikt) |
-| `npm run build` | Bouwt de statische app naar `dist/` |
-| `npm run preview` | Toont de build lokaal |
+| `npm run build` | Bouwt de app met Next.js naar `.next/` |
+| `npm run preview` | Start de build lokaal (`next start`), ook op alle netwerkadressen |
 | `npm run model` | Genereert het 3D-model opnieuw en werkt `src/data/speeltoestel.json` bij |
 
 `npm run model` heeft alleen Python 3 nodig, zonder extra pakketten.
@@ -38,6 +38,10 @@ Vite toont ook een netwerkadres. Daarmee open je de app op een telefoon in hetze
 | `src/data/speeltoestel.d.json.ts` | Het type van dat model, zodat TypeScript het niet uit de JSON afleidt |
 | `src/domain/model.ts` | De types van de modeldata: een onderdeel (`Part`), het model, de modulecodes en het filter |
 | `src/domain/parts.ts` | Nederlandse namen, opmaak van maten en de filterregels |
+| `src/app/layout.tsx` | Het HTML-document: taal, titel en lettertypen |
+| `src/app/page.tsx` | De enige pagina: de opmaak van canvas, knoppen en paneel |
+| `src/app/speeltoestel-app.tsx` | Start status, paneel en viewer in de browser en ruimt ze weer op |
+| `src/styles.css` | Het globale stylesheet |
 | `src/store.ts` | Gedeelde UI-status |
 | `src/actions.ts` | Wat paneel en viewer aan de status vragen: selecteren, filteren en tikken |
 | `src/viewer/viewer.ts` | Three.js-scène, draaien en zoomen, tikken op onderdelen |
@@ -46,5 +50,5 @@ Vite toont ook een netwerkadres. Daarmee open je de app op een telefoon in hetze
 | `src/viewer/picking.ts` | Wat als tik telt, en welk onderdeel een tik raakt |
 | `src/ui/panel.ts` | Paneel met onderdeelkaart, modules en onderdelenlijst |
 | `src/ui/dom.ts` | Zoekt de elementen van de pagina op id op, en controleert hun type |
-| `src/main.ts` | Koppelt alles aan elkaar |
 | `tests/` | Unittests voor de modeldata, de domeinlogica, het paneel, de pagina en de viewerregels |
+| `next.config.ts` | Instellingen van Next.js: welke netwerkadressen de ontwikkelserver toelaat |
