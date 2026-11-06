@@ -11,4 +11,5 @@ The project's stack document (`K-LAYOUT-17`), started by `kanon init`. The secti
 ## Code areas
 
 - `src/` — code: the speeltoestel viewer app
-- `tests/` `vitest` — tests: unit tests of the model data and the part helpers
+- `model/` — code: the model generator, the Python one `npm run model` runs and its TypeScript port in `model/generator.ts`
+- `tests/` `vitest` — tests: unit tests of the model data, the part helpers and the model generator
