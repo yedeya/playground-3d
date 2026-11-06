@@ -36,7 +36,11 @@ Vite toont ook een netwerkadres. Daarmee open je de app op een telefoon in hetze
 | `src/data/speeltoestel.json` | Gegenereerd model voor de app; niet met de hand aanpassen |
 | `src/domain/parts.js` | Nederlandse namen, opmaak van maten en de filterregels |
 | `src/store.js` | Gedeelde UI-status |
+| `src/actions.js` | Wat paneel en viewer aan de status vragen: selecteren, filteren en tikken |
 | `src/viewer/viewer.js` | Three.js-scène, draaien en zoomen, tikken op onderdelen |
+| `src/viewer/meshes.js` | Bouwt per onderdeel een mesh met randen uit de driehoeken |
+| `src/viewer/appearance.js` | Kleur, gloed en transparantie per onderdeel, en de röntgenweergave van het geselecteerde onderdeel |
+| `src/viewer/picking.js` | Wat als tik telt, en welk onderdeel een tik raakt |
 | `src/ui/panel.js` | Paneel met onderdeelkaart, modules en onderdelenlijst |
 | `src/main.js` | Koppelt alles aan elkaar |
-| `tests/` | Unittests voor de modeldata en de domeinlogica |
+| `tests/` | Unittests voor de modeldata, de domeinlogica, het paneel, de pagina en de viewerregels |
