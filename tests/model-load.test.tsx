@@ -52,7 +52,10 @@ afterEach(() => {
 describe('where the model comes from', () => {
   it('[MODEL-9] tracks no JSON model under src/ and imports no JSON into the client', () => {
     const tracked = execFileSync('git', ['ls-files', 'src'], { cwd: root, encoding: 'utf8' }).split('\n').filter(Boolean);
-    expect(tracked.filter(path => /\.json$/.test(path))).toEqual([]);
+    // drizzle-kit's migration metadata is the one JSON allowed under src/: a snapshot per migration and the journal
+    // (`## Generated files` in docs/qa/stack.md). It is not a model, and no client code imports it.
+    const drizzleMeta = /^src\/server\/db\/migrations\/meta\/(\d{4}_snapshot|_journal)\.json$/;
+    expect(tracked.filter(path => /\.json$/.test(path) && !drizzleMeta.test(path))).toEqual([]);
     expect(existsSync(join(root, 'src/data/speeltoestel.json'))).toBe(false);
     for (const path of tracked.filter(p => /\.tsx?$/.test(p))) {
       const source = readFileSync(join(root, path), 'utf8');
