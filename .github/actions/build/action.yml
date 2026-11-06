@@ -1,0 +1,29 @@
+# The deploy lane's build hook (docs/lanes.md, "The hooks"; [PLAT-8]). Kanon's `build` job runs it once per release, on the
+# release's commit, with `contents: read` and nothing else: no OIDC token, no secret, no environment. It builds the app once with
+# OpenNext, which runs `next build` itself, and fills `output` with what `sst deploy` reads, which every environment then deploys
+# as it is ([PLAT-9]). A failed step fails the hook.
+name: Build
+description: Builds the app once with OpenNext, and fills `output` with what sst deploy reads.
+inputs:
+  release:
+    description: The release's tag, passed by Kanon's deploy lane.
+    required: true
+  sha:
+    description: The release's commit, checked out by Kanon's deploy lane.
+    required: true
+  output:
+    description: The directory to fill; Kanon's deploy lane uploads it as the build's artifact.
+    required: true
+runs:
+  using: composite
+  steps:
+    - uses: ./.github/actions/project-setup
+    # The installed @opennextjs/aws (package.json pins it), never a version npx would download.
+    - name: Build the app with OpenNext
+      shell: bash
+      run: npx --no-install open-next build
+    - name: Fill the output with the OpenNext build
+      shell: bash
+      env:
+        OUTPUT: ${{ inputs.output }}
+      run: node "$GITHUB_ACTION_PATH/collect.ts" "$OUTPUT"

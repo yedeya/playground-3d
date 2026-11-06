@@ -1,0 +1,25 @@
+# The deploy lane's smoke hook (docs/lanes.md, "The hooks"; [PLAT-10]). Kanon runs it in the environment's `deploy` job, right after
+# the deploy hook, which handed it the deployed URL in `$RUNNER_TEMP/playground-3d-url`. It fails unless the page answers 200 with the
+# title `Speeltoestel ArcticFlyer 3D` and every script the page references answers 200. It reads no credential. No smoke schedule is
+# declared: production has a required reviewer (docs/qa/adoption.md, `## Deploy`).
+name: Smoke
+description: Checks the deployed page and its scripts answer 200, with the app's title.
+inputs:
+  environment:
+    description: The environment just deployed.
+    required: true
+  role:
+    description: production or pre-production.
+    required: true
+  release:
+    description: The release just deployed.
+    required: true
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v6
+      with:
+        node-version: 24
+    - name: Check the deployed page and its scripts
+      shell: bash
+      run: node "$GITHUB_ACTION_PATH/smoke.ts"
