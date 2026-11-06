@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import data from '../src/data/speeltoestel.json';
 import { createActions } from '../src/actions.js';
-import { createStore } from '../src/store.js';
+import { createStore, type AppState } from '../src/store.js';
 
-const part = id => data.parts.find(p => p.id === id);
-const estimated = data.parts.find(p => p.source === 'estimate');
-const manual = data.parts.find(p => p.source === 'manual' && p.module !== estimated.module);
+const part = (id: string) => data.parts.find(p => p.id === id)!;
+const estimated = data.parts.find(p => p.source === 'estimate')!;
+const manual = data.parts.find(p => p.source === 'manual' && p.module !== estimated.module)!;
 
-function setup(initial) {
+function setup(initial?: Partial<AppState>) {
   const store = createStore({ filter: null, selected: null, natural: false, ...initial });
   return { store, actions: createActions({ data, store }) };
 }
@@ -50,7 +50,7 @@ describe('filter change', () => {
 describe('pick from the viewer', () => {
   it('[APP-14] selects the part a tap hits, and a tap that hits nothing clears an existing selection', () => {
     const { store, actions } = setup();
-    const states = [];
+    const states: AppState[] = [];
     store.subscribe(state => states.push(state));
 
     actions.pick(null);

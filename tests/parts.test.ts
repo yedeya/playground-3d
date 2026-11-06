@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import data from '../src/data/speeltoestel.json';
+import type { Part } from '../src/domain/model.js';
 import { MODULES, MODULE_ORDER, kindOf, kitText, matchesFilter, sizeText } from '../src/domain/parts.js';
 
 describe('model data', () => {
@@ -20,8 +21,8 @@ describe('model data', () => {
   });
 
   it('[APP-3] has the ladder and slide swapped compared with the manual', () => {
-    const xs = id => {
-      const { tri } = data.parts.find(p => p.id === id);
+    const xs = (id: string) => {
+      const { tri } = data.parts.find(p => p.id === id)!;
       return tri.filter((_, i) => i % 3 === 0);
     };
     expect(Math.min(...xs('C14_S1'))).toBeGreaterThan(2190);
@@ -57,7 +58,7 @@ describe('part texts', () => {
 });
 
 describe('filter', () => {
-  const ids = parts => parts.map(p => p.id);
+  const ids = (parts: readonly Pick<Part, 'id'>[]) => parts.map(p => p.id);
 
   it('[APP-7] matches everything, exactly the estimates, or exactly a module', () => {
     expect(data.parts.every(p => matchesFilter(p, null))).toBe(true);
@@ -70,7 +71,7 @@ describe('filter', () => {
         .toEqual(ids(data.parts.filter(p => p.module === code)));
     }
 
-    const part = { module: 'A45', source: 'estimate' };
+    const part = { module: 'A45', source: 'estimate' } as const;
     expect(matchesFilter(part, null)).toBe(true);
     expect(matchesFilter(part, 'A45')).toBe(true);
     expect(matchesFilter(part, 'B07')).toBe(false);

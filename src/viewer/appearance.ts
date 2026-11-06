@@ -1,30 +1,46 @@
 // How the state looks in the scene: a part's colour, emission and transparency, and the x-ray of the selected part.
 import * as THREE from 'three';
+import type { ModuleCode, Part, Rgb } from '../domain/model.js';
 import { matchesFilter } from '../domain/parts.js';
+import type { AppState } from '../store.js';
+import type { PartMesh } from './meshes.js';
 
 export const SELECT = 0xff1f6b;
+
+/** The fields of a part its appearance depends on. */
+export type AppearancePart = Pick<Part, 'id' | 'module' | 'source' | 'natural'>;
+export type ModuleColors = Readonly<Record<ModuleCode, Rgb>>;
+
+export type Appearance = {
+  transparent: boolean;
+  opacity: number;
+  depthWrite: boolean;
+  edges: boolean;
+  emissive: number;
+  emissiveIntensity: number;
+} & ({ selected: true; color: number } | { selected: false; color: Rgb });
 
 /**
  * A part's appearance for a state. `color` is the hex SELECT for the selected part, and otherwise
  * an sRGB [r, g, b] triple: the part's wood colour in wood colours, its module's colour otherwise.
  */
-export function appearanceOf(part, state, moduleColors) {
+export function appearanceOf(part: AppearancePart, state: AppState, moduleColors: ModuleColors): Appearance {
   const visible = matchesFilter(part, state.filter);
-  const selected = part.id === state.selected;
+  const look = { transparent: !visible, opacity: visible ? 1 : 0.09, depthWrite: visible, edges: visible };
+  if (part.id === state.selected) {
+    return { selected: true, color: SELECT, emissive: SELECT, emissiveIntensity: 0.75, ...look };
+  }
   return {
-    selected,
-    color: selected ? SELECT : (state.natural ? part.natural : moduleColors[part.module]),
-    emissive: selected ? SELECT : 0x000000,
-    emissiveIntensity: selected ? 0.75 : 0,
-    transparent: !visible,
-    opacity: visible ? 1 : 0.09,
-    depthWrite: visible,
-    edges: visible,
+    selected: false,
+    color: state.natural ? part.natural : moduleColors[part.module],
+    emissive: 0x000000,
+    emissiveIntensity: 0,
+    ...look,
   };
 }
 
 /** Translucent copy without depth test, so a selected part stays visible behind other parts. */
-export function createXray() {
+export function createXray(): THREE.Mesh<THREE.BufferGeometry, THREE.MeshBasicMaterial> {
   const xray = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshBasicMaterial({
     color: SELECT, transparent: true, opacity: 0.4, depthTest: false, side: THREE.DoubleSide,
   }));
@@ -33,8 +49,13 @@ export function createXray() {
   return xray;
 }
 
-/** Paints every part mesh (see meshes.js) for the state, and puts the x-ray on the selected one. */
-export function applyAppearance(meshes, xray, state, moduleColors) {
+/** Paints every part mesh (see meshes.ts) for the state, and puts the x-ray on the selected one. */
+export function applyAppearance(
+  meshes: readonly PartMesh<AppearancePart>[],
+  xray: THREE.Mesh<THREE.BufferGeometry, THREE.MeshBasicMaterial>,
+  state: AppState,
+  moduleColors: ModuleColors,
+): void {
   xray.visible = false;
   for (const mesh of meshes) {
     const { part, edges } = mesh.userData;

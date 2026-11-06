@@ -3,21 +3,21 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import data from '../src/data/speeltoestel.json';
 import { createActions } from '../src/actions.js';
 import { MODULES, MODULE_ORDER, toCssColor } from '../src/domain/parts.js';
-import { createStore } from '../src/store.js';
-import { createPanel } from '../src/ui/panel.js';
+import { createStore, type AppState, type Store } from '../src/store.js';
+import { createPanel, type PanelData } from '../src/ui/panel.js';
 import { loadPage } from './page.js';
 
-const $ = selector => document.querySelector(selector);
-const chips = selector => [...document.querySelectorAll(`${selector} > button`)];
-const pressed = selector => chips(selector).filter(b => b.getAttribute('aria-pressed') === 'true');
-const moduleChip = key => chips('#modules').find(b => b.dataset.key === key);
-const partChip = id => chips('#parts').find(b => b.dataset.key === id);
-const text = el => el.textContent.replace(/\s+/g, ' ').trim();
+const $ = (selector: string) => document.querySelector<HTMLElement>(selector)!;
+const chips = (selector: string) => [...document.querySelectorAll<HTMLButtonElement>(`${selector} > button`)];
+const pressed = (selector: string) => chips(selector).filter(b => b.getAttribute('aria-pressed') === 'true');
+const moduleChip = (key: string) => chips('#modules').find(b => b.dataset.key === key)!;
+const partChip = (id: string) => chips('#parts').find(b => b.dataset.key === id)!;
+const text = (el: Element) => el.textContent!.replace(/\s+/g, ' ').trim();
 const fields = () => Object.fromEntries([...document.querySelectorAll('#card dt')]
-  .map(dt => [dt.textContent, text(dt.nextElementSibling)]));
+  .map(dt => [dt.textContent, text(dt.nextElementSibling!)]));
 
-let store;
-function open(appData = data, initial = {}) {
+let store: Store;
+function open(appData: PanelData = data, initial: Partial<AppState> = {}) {
   store = createStore({ filter: null, selected: null, natural: false, ...initial });
   createPanel({ data: appData, store, actions: createActions({ data: appData, store }) });
 }
@@ -47,13 +47,13 @@ describe('stats line and module row', () => {
     MODULE_ORDER.forEach((code, i) => {
       const button = row[i + 1];
       const n = data.parts.filter(p => p.module === code).length;
-      expect(button.querySelector('b').textContent, code).toBe(code);
-      expect(button.querySelector('i').textContent, code).toBe(String(n));
+      expect(button.querySelector('b')!.textContent, code).toBe(code);
+      expect(button.querySelector('i')!.textContent, code).toBe(String(n));
       expect(text(button), code).toBe(`${code} ${MODULES[code]} ${n}`);
-      expect(button.querySelector('.tape').getAttribute('style'), code)
+      expect(button.querySelector('.tape')!.getAttribute('style'), code)
         .toBe(`background:${toCssColor(data.moduleColors[code])}`);
     });
-    expect(text(row.at(-1))).toBe('Geschat 22');
+    expect(text(row.at(-1)!)).toBe('Geschat 22');
 
     expect(pressed('#modules').map(b => b.dataset.key)).toEqual(['all']);
     for (const key of ['B07', 'estimate', 'all', 'G01']) {
@@ -114,7 +114,7 @@ describe('card', () => {
   });
 
   it('[APP-11] shows the source badge and leaves out the size when a part has none', () => {
-    const synthetic = [
+    const synthetic: PanelData['parts'] = [
       { id: 'X_manual', module: 'A45', group: 'post', kit: 'E24-F swing hook', size: '1950x88x44', source: 'manual' },
       { id: 'X_estimate', module: 'H10', group: 'canvas', kit: 'handle', size: 'handle', source: 'estimate' },
     ];

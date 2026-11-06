@@ -2,9 +2,10 @@ import * as THREE from 'three';
 import { describe, expect, it } from 'vitest';
 import { TAP_OFFSETS, createTapTracker, isTap, pickPart } from '../src/viewer/picking.js';
 import { partMesh } from '../src/viewer/meshes.js';
+import type { Filter, ModuleCode, Source } from '../src/domain/model.js';
 
 describe('what counts as a tap', () => {
-  const at = (x, y, t) => ({ x, y, t });
+  const at = (x: number, y: number, t: number) => ({ x, y, t });
 
   it('[APP-14] is a press that moves at most 8 px and lasts at most 500 ms', () => {
     expect(isTap(at(100, 100, 0), at(100, 100, 0))).toBe(true);
@@ -18,9 +19,9 @@ describe('what counts as a tap', () => {
 
   it('[APP-14] counts only the primary pointer', () => {
     let now = 0;
-    const taps = [];
+    const taps: [number, number][] = [];
     const tracker = createTapTracker((x, y) => taps.push([x, y]), () => now);
-    const pointer = (clientX, clientY, isPrimary = true) => ({ clientX, clientY, isPrimary });
+    const pointer = (clientX: number, clientY: number, isPrimary = true) => ({ clientX, clientY, isPrimary });
 
     tracker.down(pointer(50, 60));
     now = 100;
@@ -81,13 +82,16 @@ describe('which part a tap picks', () => {
   const centre = { x: rect.left + 100, y: rect.top + 100 };
 
   // A square part facing the camera at z = 0, placed and sized in screen pixels around the centre.
-  function square(id, dxPx, dyPx, halfPx, { module = 'A45', source = 'manual', z = 0 } = {}) {
+  function square(
+    id: string, dxPx: number, dyPx: number, halfPx: number,
+    { module = 'A45', source = 'manual', z = 0 }: { module?: ModuleCode; source?: Source; z?: number } = {},
+  ) {
     const x0 = (dxPx - halfPx) * mmPerPx, x1 = (dxPx + halfPx) * mmPerPx;
     const y0 = -(dyPx + halfPx) * mmPerPx, y1 = -(dyPx - halfPx) * mmPerPx;
     const tri = [x0, y0, z, x1, y0, z, x1, y1, z, x0, y0, z, x1, y1, z, x0, y1, z];
     return partMesh({ id, module, source, tri, natural: [1, 1, 1] });
   }
-  const pick = (meshes, filter = null, dx = 0, dy = 0) =>
+  const pick = (meshes: ReturnType<typeof square>[], filter: Filter = null, dx = 0, dy = 0) =>
     pickPart({ x: centre.x + dx, y: centre.y + dy, rect, camera, meshes, filter })?.id ?? null;
 
   it('[APP-14] picks the nearest part on the ray through the tap point', () => {
