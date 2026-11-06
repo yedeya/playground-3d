@@ -1,6 +1,6 @@
 // One mesh per part, built from its triangles (in mm), with its edges as a child.
 import * as THREE from 'three';
-import type { Part } from '../domain/model.js';
+import type { Part } from '../domain/model';
 
 /** A part's mesh: its part and its edges ride along in userData. */
 export type PartMesh<P = Part> = THREE.Mesh<THREE.BufferGeometry, THREE.MeshLambertMaterial> & {

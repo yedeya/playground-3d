@@ -1,11 +1,11 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it } from 'vitest';
 import data from '../src/data/speeltoestel.json';
-import { createActions } from '../src/actions.js';
-import { MODULES, MODULE_ORDER, toCssColor } from '../src/domain/parts.js';
-import { createStore, type AppState, type Store } from '../src/store.js';
-import { createPanel, type PanelData } from '../src/ui/panel.js';
-import { loadPage } from './page.js';
+import { createActions } from '../src/actions';
+import { MODULES, MODULE_ORDER, toCssColor } from '../src/domain/parts';
+import { createStore, type AppState, type Store } from '../src/store';
+import { createPanel, type PanelData } from '../src/ui/panel';
+import { loadPage } from './page';
 
 const $ = (selector: string) => document.querySelector<HTMLElement>(selector)!;
 const chips = (selector: string) => [...document.querySelectorAll<HTMLButtonElement>(`${selector} > button`)];

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import data from '../src/data/speeltoestel.json';
-import type { Part } from '../src/domain/model.js';
-import { MODULES, MODULE_ORDER, kindOf, kitText, matchesFilter, sizeText } from '../src/domain/parts.js';
+import type { Part } from '../src/domain/model';
+import { MODULES, MODULE_ORDER, kindOf, kitText, matchesFilter, sizeText } from '../src/domain/parts';
 
 describe('model data', () => {
   it('[APP-1] holds 161 parts with unique ids, one of the 11 module codes and whole triangles', () => {
