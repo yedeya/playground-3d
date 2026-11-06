@@ -9,7 +9,7 @@
     "preview": "next start --hostname 0.0.0.0",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "model": "python3 -I model/build_playground.py model/output && cp model/output/speeltoestel-web.json src/data/speeltoestel.json"
+    "model": "node model/cli.ts"
   },
   "dependencies": {
     "next": "16.4.5",

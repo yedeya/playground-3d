@@ -12,7 +12,7 @@ Werkt:
 - Parametrisch model met 161 onderdelen in 11 modules, gebouwd uit de handleiding.
 - Webapp: draaien en zoomen, tikken op een onderdeel, filteren op module of op geschatte delen, wisselen tussen module- en natuurkleuren.
 - De webapp is een Next.js-app (App Router) in TypeScript. Paneel en viewer zijn gewone modules die `src/app/speeltoestel-app.tsx` in de browser start en weer opruimt.
-- Ladder en glijbaan staan op verzoek van de gebruiker omgekeerd ten opzichte van de handleiding (`SWAP_LADDER_SLIDE` in `model/build_playground.py`).
+- Ladder en glijbaan staan op verzoek van de gebruiker omgekeerd ten opzichte van de handleiding (`SWAP_LADDER_SLIDE` in `model/generator.ts`).
 
 Ontbreekt nog:
 - Transportgroepen: welke onderdelen samen één stuk blijven.
@@ -68,15 +68,18 @@ Maten in millimeters; in de app en USD-bestanden gedeeld door 1000.
 ## Datastroom
 
 ```
-model/build_playground.py
-  → model/output/  (USDA en parts.csv, niet in git)
-  → src/data/speeltoestel.json  (wel in git, via npm run model)
+model/generator.ts
+  → public/models/speeltoestel.glb  (wel in git, via npm run model)
+
+src/data/speeltoestel.json  (wel in git, door niets meer bijgewerkt)
   → de app
 ```
 
+De app laadt nog de JSON, tot ze overstapt op de GLB. De oude Python-generator `model/build_playground.py` schrijft nog de USDA en `parts.csv` naar `model/output/` (niet in git), maar `npm run model` draait hem niet meer.
+
 Een onderdeel in de JSON heeft `id`, `module`, `kit` (code uit de handleiding), `group`, `size`, `source`, `natural` (RGB) en `tri` (driehoeken als platte lijst in mm).
 
-Pas geometrie alleen aan in de generator en draai daarna `npm run model` en `npm test`. Een test legt vast dat er 161 onderdelen en 22 schattingen zijn; pas die bewust aan als het aantal klopt maar veranderd is.
+Pas geometrie alleen aan in de generator en draai daarna `npm run model -- --baseline` en `npm test`. Zolang de app de JSON laadt, werkt dat de JSON niet bij: wacht met geometriewijzigingen tot de app de GLB laadt, of volg §6 van `docs/projects/7.md`. Een test legt vast dat er 161 onderdelen en 22 schattingen zijn; pas die bewust aan als het aantal klopt maar veranderd is.
 
 Het is aan te raden nieuwe gegevens zoals transportgroepen in een eigen databestand te zetten, gekoppeld aan het onderdeel-`id`. Dan overschrijft de generator ze niet.
 
@@ -87,7 +90,7 @@ Het is aan te raden nieuwe gegevens zoals transportgroepen in een eigen databest
 3D-bestanden voor Quick Look op de Mac maken:
 
 ```bash
-npm run model
+python3 -I model/build_playground.py model/output
 ```
 
 ```bash
