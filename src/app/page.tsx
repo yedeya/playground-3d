@@ -1,5 +1,7 @@
-// The one route: the page's markup, which the client component fills in once it runs in the browser.
+// The one route: the page's markup, which the client component fills in once it runs in the browser. The update
+// notice renders nothing until a new version of the offline app waits ([PWA-5]).
 import SpeeltoestelApp from './speeltoestel-app';
+import UpdateNotice from './update-notice';
 
 export default function Page() {
   return (
@@ -13,6 +15,7 @@ export default function Page() {
         </div>
         <div id="hint">Eén vinger draait, twee zoomen en schuiven. Raster 1 m.</div>
         <div id="fail" hidden>Het 3D-beeld kan hier niet laden. Laad de pagina opnieuw of probeer een andere browser. De onderdelenlijst hieronder werkt wel.</div>
+        <UpdateNotice />
       </div>
       <section id="panel" aria-label="Onderdelen">
         <div id="card" aria-live="polite"></div>

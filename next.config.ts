@@ -1,4 +1,14 @@
+import { randomUUID } from 'node:crypto';
+import { withSerwist } from '@serwist/turbopack';
 import type { NextConfig } from 'next';
+
+/**
+ * One id per `next build`: Next.js writes it to `.next/BUILD_ID`, and the compiler writes it into the service worker's
+ * route as `process.env.PWA_BUILD_ID`, the revision of the page in the precache list ([PWA-2], [PWA-6]). The route
+ * cannot read `.next/BUILD_ID` instead: Next.js loads the route, and Serwist builds the worker, while it collects page
+ * data, before it writes that file.
+ */
+export const BUILD_ID = randomUUID();
 
 // `npm run dev` listens on every interface so a phone on the same wifi can open the app, as Vite's `--host` did.
 // Next.js's dev server refuses its own dev resources to any host it does not know, so the app would never start
@@ -11,8 +21,23 @@ const PRIVATE_NETWORK = [
   '*.local',
 ];
 
+/**
+ * The offline app's files a browser must ask the server about every time it is online ([PWA-6]): the service worker
+ * (src/app/serwist/[path]/route.ts) and the manifest (src/app/manifest.ts). A deploy then reaches a device the next
+ * time the app opens online.
+ */
+export const NO_CACHE_PATHS = ['/serwist/:path*', '/manifest.webmanifest'];
+
 const config: NextConfig = {
   allowedDevOrigins: PRIVATE_NETWORK,
+  generateBuildId: () => BUILD_ID,
+  env: { PWA_BUILD_ID: BUILD_ID },
+  async headers() {
+    // Lower case, as the prerendered routes store their own `cache-control`: OpenNext, which serves the deployed site,
+    // lays these headers over the stored ones by their exact name.
+    return NO_CACHE_PATHS.map(source => ({ source, headers: [{ key: 'cache-control', value: 'no-cache' }] }));
+  },
 };
 
-export default config;
+// Serwist builds the service worker with esbuild inside a route, so the server leaves esbuild unbundled.
+export default withSerwist(config);
