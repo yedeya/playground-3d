@@ -1,8 +1,8 @@
 import * as THREE from 'three';
 import { describe, expect, it } from 'vitest';
-import { TAP_OFFSETS, createTapTracker, isTap, pickPart } from '../src/viewer/picking.js';
-import { partMesh } from '../src/viewer/meshes.js';
-import type { Filter, ModuleCode, Source } from '../src/domain/model.js';
+import { TAP_OFFSETS, createTapTracker, isTap, pickPart } from '../src/viewer/picking';
+import { partMesh } from '../src/viewer/meshes';
+import type { Filter, ModuleCode, Source } from '../src/domain/model';
 
 describe('what counts as a tap', () => {
   const at = (x: number, y: number, t: number) => ({ x, y, t });

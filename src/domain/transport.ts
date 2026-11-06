@@ -1,7 +1,7 @@
 // The transport plan's rules (docs/qa/specs/transport.md): pieces, which piece each part is in, the contacts
 // between pieces and the tape labels on their joints. Pure data in, new data out: no DOM, no 3D and no network.
 // A plan is never changed in place; every edit returns a new plan.
-import type { Part, Rgb } from './model.js';
+import type { Part, Rgb } from './model';
 
 export type PieceId = string;
 

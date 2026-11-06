@@ -1,5 +1,5 @@
 // The app's single source of UI state. Viewer and panel subscribe; neither talks to the other directly.
-import type { Filter } from './domain/model.js';
+import type { Filter } from './domain/model';
 
 export interface AppState {
   filter: Filter;

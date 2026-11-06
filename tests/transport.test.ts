@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import data from '../src/data/speeltoestel.json';
-import type { Part, Rgb } from '../src/domain/model.js';
+import type { Part, Rgb } from '../src/domain/model';
 import {
   CONTACT_MARGIN_MM, DISPLACED_MM, LABEL_TEXT_MAX, TAPE_PALETTE,
   addPiece, analyseModel, assignPart, deleteLabel, deletePiece, displacedLabels, emptyPlan, isDisplaced,
   labelsNaming, looseParts, neighbourPairs, neighboursOf, orphanLabels, orphanMemberships, partBox, partsOf,
   pieceOf, putLabel, renamePiece, tapeSwatch, touches, unassignPart, unknownParts,
-} from '../src/domain/transport.js';
-import type { Box, JointLabel, Plan, PlanResult, TapeColour } from '../src/domain/transport.js';
+} from '../src/domain/transport';
+import type { Box, JointLabel, Plan, PlanResult, TapeColour } from '../src/domain/transport';
 
 const RED: Rgb = [0.8, 0.1, 0.1];
 const BLUE: Rgb = [0.1, 0.3, 0.8];
